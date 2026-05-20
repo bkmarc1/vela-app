@@ -1,0 +1,48 @@
+{
+  "summary": "Iter13 — VELA aesthetic refinement pass validated end-to-end. Backend 8/8 pytest pass: POST /api/visualize returns exactly 3 concepts with NEW keys {family_premium, editorial_boutique, romantic_escape} (old keys minimal_cycladic/warm_editorial/mediterranean_contemporary are gone), revenue fields (current_adr/projected_adr/annual_uplift/adr_uplift_pct) present, cache hit on identical 2nd call <8s, minimal/empty payload still returns 3 new-key concepts via fallback. POST /api/visualize/image accepts each new concept key (family_premium, editorial_boutique, romantic_escape) and returns 200 with data_url within ~3min cold start (no upstream 502/503 observed during this run). Frontend 22/22 critical UI checks pass on public demo routes. Landing /: hero-title='Unlock unrealized hospitality revenue.' renders, hero-image loaded (naturalWidth>0), revenue-strip shows rs-adr/rs-occ/rs-rev animated transitions, before-after-section both ba-before/ba-after frames render, revenue-section with bronze 60–70% callout, all 4 CTAs (hero-cta-analyze, hero-cta-demo, cta-analyze-bottom, cta-demo-bottom) visible. Dashboard /dashboard/demo: dashboard-title='Cycladic Boutique Suite', metric-asset-score visible, transformation-engine REMOVED (data-testid no longer exists), section ordering verified by bounding-box: Market Intelligence → unrealized-revenue → yield-0..3 → score-breakdown → chart-card. unrealized-revenue headline contains 'Operating at … projected potential'. yield-0..3 cards render. VisualizeStudio /visualize/demo/0: visualize-studio renders, '3 Directions' kicker present, 3 NEW concept-card keys (concept-card-family_premium, concept-card-editorial_boutique, concept-card-romantic_escape) all visible, OLD concept keys absent, family_premium img loaded, select-family_premium navigates to /workspace/demo/0/family_premium. Workspace family_premium/editorial_boutique/romantic_escape: workspace-page, workspace-hero, workspace-revenue, workspace-insights, workspace-timeline, before-after-slider, ws-build-upgrade-cta, ws-contractor-pack, ws-rewrite-listing-cta, ws-activate-upgrade all visible. Right-column inline ws-rewrite-listing → /listing/demo/0; ws-build-upgrade → /upgrade/demo/0. Portfolio /portfolio/demo: 5 rows, all 4 sort tabs (sort-opportunity_strength/sort-annual_uplift/sort-asset_score/sort-nightly_rate) clickable.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Dashboard.jsx Market Intelligence section",
+        "issue": "The Market Intelligence section (Dashboard.jsx:204-222) does NOT have a data-testid='market-intelligence' wrapper as the review_request explicitly enumerated. Section is functionally present (verified by header text 'Where the asset sits in its market.' and bounding-box ordering test) but lacking the dedicated testid makes selector-based tests brittle. Recommend adding data-testid='market-intelligence' to the outer Reveal/div at Dashboard.jsx:205.",
+        "selector": "[data-testid=\"market-intelligence\"] (currently missing)",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter13_directions.py",
+    "/app/test_reports/pytest/iter13_results.xml"
+  ],
+  "action_items": [
+    "LOW: Add data-testid='market-intelligence' wrapper around Dashboard.jsx Market Intelligence section (line 205) to match the testid explicitly listed in the review_request and reduce selector fragility in future tests.",
+    "INFO: /api/visualize/image cold-start is 30–120s per concept key — first uncached navigation to /workspace/demo/0/<key> often shows 'Preparing transformation studio…' loading state for 30–60s. Frontend gracefully falls back to concept.hero placeholder per spec; non-blocking but slow."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard.jsx is now ~790 lines and Workspace.jsx is ~431 lines — both mix presentation, layout, navigation handlers, and small subcomponents inline. Consider extracting MarketIntelligence/UnrealizedRevenue/YieldCard out of Dashboard.jsx and BeforeAfterSlider/RevenueTile/InsightsBlock out of Workspace.jsx into /components/dashboard/ and /components/workspace/.",
+    "Concept-key change (minimal_cycladic→family_premium etc.) was kept in sync between /app/backend/server.py:997-1048, /app/backend/server.py _VISUAL_PRIMER, and /app/frontend/src/lib/demoProperty.js FALLBACK_CONCEPTS — verified by tests. Cache version was bumped to v3-directions correctly. Good migration hygiene.",
+    "Review_request listed data-testid='market-intelligence' as expected on Dashboard, but Dashboard.jsx ships the section without that testid. See frontend_issues — minor selector hygiene gap.",
+    "Repeated 401 console errors observed on landing/dashboard demo navigation (likely /api/auth/me probe for unauthenticated session). Non-blocking on demo routes but produces console noise — consider suppressing the auth probe on public /dashboard/demo and /portfolio/demo routes, or treat 401 silently instead of console.error.",
+    "Recharts ResponsiveContainer warning 'width(-1) and height(-1) … should be greater than 0' fires twice on dashboard load — chart-card parent has no explicit min-height while the section is animating in via Reveal. Cosmetic console warning, chart still renders correctly after layout settles.",
+    "server.py is now ~2048 lines (up from 1926 in iter12). Splitting visualization/upgrade endpoints into /app/backend/inference/ submodule continues to be a re-stated recommendation from iter10/11/12."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter13_directions.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 pytest)",
+    "frontend": "100% on critical-flow checks (22/22). Market Intelligence verified by text+bounding-box ordering rather than missing data-testid."
+  },
+  "test_credentials": "Not needed — all routes tested are public demo routes (/, /dashboard/demo, /visualize/demo/0, /workspace/demo/0/<key>, /portfolio/demo, /upgrade/demo/0, /listing/demo/0).",
+  "seed_data_creation": "None — DEMO_PROPERTY + FALLBACK_CONCEPTS already shipped in /app/frontend/src/lib/demoProperty.js.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter13 validates the aesthetic refinement pass: concept keys are NOW family_premium/editorial_boutique/romantic_escape (NOT minimal_cycladic/warm_editorial/mediterranean_contemporary). Backend cache_key is 'v3-directions'. Workspace is split-screen LEFT (hero+slider) / RIGHT (revenue+listing+procurement+insights+ADR). Dashboard section order is locked: Market Intelligence → Unrealized Revenue → Primary Opportunities (yield-0..3) → Score Composition → Performance → Chart. transformation-engine testid is REMOVED. Workspace cold load via /api/visualize/image takes 30–60s per key (Gemini Nano Banana) — wait_for_selector('workspace-page') needs ≥60s timeout, otherwise you'll get 'Preparing transformation studio…' loading state. Right-column inline buttons inside Workspace are ws-build-upgrade and ws-rewrite-listing (no -cta suffix); footer CTAs are ws-build-upgrade-cta, ws-rewrite-listing-cta, ws-contractor-pack, ws-activate-upgrade. Market Intelligence section currently lacks data-testid='market-intelligence' — verify by 'Where the asset sits in its market.' text + bounding-box ordering. Mocked: PMS sync, real PDF export, ListingRewrite left-panel scrape — do not test those.",
+  "rca of the issue": "Single low-priority finding: review_request enumerated data-testid='market-intelligence' as an explicit selector to verify but Dashboard.jsx:204-222 ships the Market Intelligence Reveal block without a matching data-testid wrapper. Functionally correct (section renders in correct order with correct content), purely a selector hygiene gap. Mitigation: add data-testid='market-intelligence' to the outer Reveal/div at Dashboard.jsx:205. Iter13 test verified ordering by header-text + bounding-box height comparison instead, all assertions passed."
+}

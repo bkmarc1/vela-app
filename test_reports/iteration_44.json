@@ -1,0 +1,27 @@
+{
+  "summary": "Iter44 MASTER FIX brief — both backend (/api/invest/ingest Spitogatos) and frontend (Operate ConfirmPropertyData + DataBadges, Reports 6-step modal, AcquisitionHero, Portfolio/demo) fully verified. 35 distinct assertions executed, 33 effective pass (2 'failures' were case-sensitive substring mismatches against CSS-uppercased rendered text — same lesson as iter43). No code bugs found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter44_master_fix.py",
+    "/app/test_reports/pytest/iter44_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ConfirmPropertyData.jsx: the 'NEEDS INPUT' hint requested in the brief is rendered as 'FILL N CRITICAL FIELDS TO CONTINUE' — functionally equivalent (counter decrements live as user fills fields, e.g. 2→1→enable). Wording deviates from the brief verbatim but is arguably clearer UX. Consider whether to keep current copy or rename to 'NEEDS INPUT' for spec literalism.",
+    "operate-opener-continue-btn becomes interactive only when [data-ready=true] is set after a CSS animation phase. Good for cinematic UX, but worth knowing for future test agents: must wait for that attribute, NOT just visibility.",
+    "Reports modal step 5 uses CSS text-transform:uppercase for section labels (TOP 3 RISKS, KEY FIGURES, WHY THIS VERDICT). Future testers should compare using case-insensitive matchers. Same caveat applied in iter43 for the homepage."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (2/2)", "frontend": "~94% (33/35; 2 case-sensitive substring mismatches not real bugs)"},
+  "test_credentials": "None — all flows tested are public/demo.",
+  "seed_data_creation": "None — used demo data + live Spitogatos URL https://www.spitogatos.gr/en/property/1119010147 against /api/invest/ingest.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter44 (MASTER FIX) fully shipped and verified. Backend /api/invest/ingest with a Spitogatos URL returns: listing_source='Spitogatos', bot_blocked=true, _confidence map with 'source_blocked' for most fields, and full extraction_debug payload (http_status=200, bot_blocked, extraction_layers=[], json_ld_count=0, og_keys=[], spito_signals={}, title_seen='Pardon Our Interruption'). Frontend: /operate has STAGE.LANDING -> CONFIRM -> THINKING -> OPENER -> DASHBOARD; demo flow correctly SKIPS Confirm and goes straight to THINKING. URL paste flow shows ConfirmPropertyData with title 'Verify what we read.', per-field status badges (SOURCE BLOCKED, NOT CONFIRMED, CONFIRMED, ESTIMATED), red required indicator on City* and Bedrooms* (critical fields), 'Confirm & Analyze' hard-disabled with hint 'FILL 2 CRITICAL FIELDS TO CONTINUE' that decrements live. Filling City makes its badge flip to CONFIRMED ('User verified'). Extraction Debug toggle ('confirm-debug-toggle') reveals a JSON panel ('confirm-debug-panel') containing listing_source, bot_blocked, extraction_debug.extraction_layers, json_ld_count, spito_signals, provenance/_confidence map. Operate dashboard OperateHero shows 6 metrics: Current ADR (€118) + Current Occupancy (67%) tagged ESTIMATED; Potential ADR (€153) + Potential Occupancy (79%) + Revenue Leakage (34% / €15,156/yr) tagged CALCULATED. /invest/asset/demo InvestOpener -> dashboard renders AcquisitionHero with €149,000 CONFIRMED, €1,987/m² CALCULATED, 75m² CONFIRMED. /reports modal: reports-new-cta opens a 6-step wizard, step counter 'STEP X of 6' + 6 progress dots, Step5 renders verdict (PASS, Confidence 100%), Key Figures (price/€per m²/surface/bedrooms/city/condition with CONFIRMED & NOT CONFIRMED badges), Projected Yield (Net Yield 2.9% CALCULATED, Annual Gross Revenue €28,416 CALCULATED, ADR €111 ESTIMATED), Why This Verdict, Top 3 Risks (numbered list), What to do next. /portfolio/demo clean hospitality grid intact: KPIs (Assets 5, Annual Revenue, Revenue Upside, Avg VELA Score), Biggest Opportunities, Needs Attention (Cycladic Boutique Suite / Paros Courtyard House / Mykonos Coastal Villa cards with 'Complete data' CTAs), asset cards grid, search + tabs (All/Owned/Targets/Needs Upgrade/High Upside/Needs Data). No IBKR references anywhere.",
+  "rca of the issue": "No bugs found. The two intermittent 'failures' I logged during testing were both test-harness artefacts: (1) my first Continue Analysis click was issued before phase==='ready' on OperateOpener, so pointer-events:none swallowed it — fixed by waiting for [data-ready=true]; (2) my fill of bedrooms input used .nth(1) on a placeholder selector whose match-set had collapsed to 1 after the first fill changed the city placeholder text — fixed semantics, not app behaviour. App behaved correctly in both cases."
+}

@@ -1,0 +1,37 @@
+{
+  "summary": "Iter31 routing + dashboard testing complete. Backend regression 30/30 PASS. Frontend Operate landing + 6-section breakdown render correctly with all 30+ data-testids present. /dashboard/demo Bloomberg command center renders with all hero metrics, opp/warn split, pipeline (3 rows), 6 AI signals, heartbeat dot, quick actions. Nav active states + dark/light theme switching verified across /operate (parchment), /dashboard/demo (dark), /invest (dark). Legacy /dashboard/asset/demo still renders the old Dashboard.jsx. Landing CTAs (landing-cta-operate + landing-engine-operate-cta) correctly route to /operate. ONE CRITICAL bug found: the two CTAs at the bottom of Operate's Final Action Plan navigate to non-existent routes.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Operate.jsx — Final Action Plan CTAs",
+        "issue": "operate-cta-upgrade-cart navigates to '/upgrade-cart/demo/0' and operate-cta-rewrite navigates to '/listing-rewrite/demo/0' — BOTH routes are NOT defined in App.js. Console emits: \"No routes matched location '/upgrade-cart/demo/0'\" and same for listing-rewrite. Result: clicking either CTA renders an empty <main> (only 227 chars of body text — just the Nav + Footer). The actual routes defined in App.js are '/upgrade/demo/:upgradeIdx' and '/listing/demo/:upgradeIdx'. Fix: change line 526 of /app/frontend/src/pages/Operate.jsx from navigate('/upgrade-cart/demo/0') -> navigate('/upgrade/demo/0'), and line 540 from navigate('/listing-rewrite/demo/0') -> navigate('/listing/demo/0').",
+        "selector": "[data-testid=operate-cta-upgrade-cart], [data-testid=operate-cta-rewrite]",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter25_invest.py",
+    "/app/backend/tests/test_iter24_stripe_warmup.py",
+    "/app/backend/tests/test_iter30_drafts_sync.py",
+    "/app/test_reports/pytest/iter31_results.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Fix Operate.jsx CTA routes — change '/upgrade-cart/demo/0' to '/upgrade/demo/0' and '/listing-rewrite/demo/0' to '/listing/demo/0' (or alternatively add new route aliases in App.js). Currently both CTAs lead to a blank page."
+  ],
+  "critical_code_review_comments": [
+    "Operate.jsx lines 526 & 540 use route paths ('/upgrade-cart/demo/0', '/listing-rewrite/demo/0') that do not exist in App.js — root cause appears to be that the iter31 spec listed those as desired URLs but the actual App.js routes were never renamed from '/upgrade/demo/...' / '/listing/demo/...'. Either rename the routes in App.js to match the spec OR fix the navigate() calls.",
+    "DashboardHome.jsx pipeline test-id derivation 'name.toLowerCase().replace(/[^a-z0-9]+/g, \"-\")' produces 'lisbon-pr-ncipe-real' for 'Lisbon Príncipe Real' (Unicode 'í' is stripped). Spec listed 'pipeline-row-paros-cliff-maison' as example so this is acceptable, but worth noting if exact strings are tested."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "~95% (1 critical CTA route bug)"},
+  "test_credentials": "N/A - public demo routes",
+  "seed_data_creation": "None — demo uses static client-side constants.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter31 backend regression: 30/30 pass (test_iter25_invest.py + test_iter24_stripe_warmup.py + test_iter30_drafts_sync.py). All Iter31 frontend testids verified present and correct: operate-kicker/headline/subtitle/url-input/analyze-btn/helper/demo-btn, all 6 operate sections (snapshot/revenue/listing/redesign/yield/action) with all sub-metrics, dashboard-home with hero-metrics (€1.42M / 9.8% / 3 / +18.4%), best-opp/underperforming/pipeline/signals(6)/heartbeat/quick-actions(4), nav active states + dark theme on /dashboard/demo and /invest. Legacy /dashboard/asset/demo still works. ONLY remaining issue: Operate's two final-action CTAs route to undefined paths — main agent should change navigate('/upgrade-cart/demo/0') -> '/upgrade/demo/0' and navigate('/listing-rewrite/demo/0') -> '/listing/demo/0' in /app/frontend/src/pages/Operate.jsx (lines 526 and 540).",
+  "rca of the issue": "Operate.jsx Final Action Plan CTAs hardcode navigate('/upgrade-cart/demo/0') and navigate('/listing-rewrite/demo/0'). These routes are NOT registered in App.js — only '/upgrade/demo/:upgradeIdx' and '/listing/demo/:upgradeIdx' exist. Reproduction: open /operate -> click operate-demo-btn -> scroll to Final Action Plan -> click 'Generate Upgrade Cart' or 'Rewrite Listing'. URL changes but body is empty (Nav+Footer only, 227 chars text). Console warning: 'No routes matched location'. Mitigation: either change the navigate() targets OR add matching routes in App.js."
+}

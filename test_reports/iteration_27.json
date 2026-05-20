@@ -1,0 +1,30 @@
+{
+  "summary": "Iter27 e2e validation. Backend regression suite (test_iter25_invest.py + test_iter24_stripe_warmup.py) = 22/22 PASS. Landing page rewrite fully verified: all 6 sections (hero, what-is, transformation, differentiators, journey, final) render in order with correct testids. Hero kicker contains 'INTELLIGENCE ENGINE', H1 contains 'AI Operating System for Hospitality Investments', subtitle mentions both Acquisition Intelligence and Asset Intelligence. Both engine cards render with all 6 features each and correct CTAs. 6 transformation flow steps + animated metrics block (€180→€245, 67%→84%, 6.8%→11%) verified. All 8 differentiator slugs present (true-net-yield-modeling, offer-intelligence, tax-aware-roi, operational-intelligence, hospitality-positioning, design-led-value-creation, transformation-upside, ai-market-signals). All 6 journey steps present. Final CTA 'Enter VELA' navigates to /invest. Nav labels correct on both shells (OPERATE: Asset Intelligence|Portfolio|Method|Pricing; INVEST: Acquisition Intelligence|Investment Portfolio|Method|Pricing) with corresponding 'nav-asset intelligence', 'nav-acquisition intelligence', 'nav-investment portfolio' testids working. Mode pill OPERATE→INVEST tested and routes to /invest correctly. Footer copy module-named correctly per shell. /invest/portfolio: all 7 column testids present, kicker 'VELA INVEST · INVESTMENT PORTFOLIO' verified. /method H1 = 'The VELA Intelligence Engine for hospitality investments.' (rendered with <br> between lines), mentions both Acquisition Intelligence and Asset Intelligence. Iter26 Edit Inputs fix CONFIRMED: on /invest/asset/demo changing asking from €149,000 → €200,000 updates Smart Buy row to €184,000 (matches 200000 × 0.92), Asking spec card shows €200,000, old €137,080 value disappears. 'Yield Brain' string NOT FOUND on /, /dashboard/demo, /invest, /invest/portfolio, /method, /invest/asset/demo (all six routes clean).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter25_invest.py",
+    "/app/backend/tests/test_iter24_stripe_warmup.py",
+    "/app/test_reports/pytest/iter27_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Landing.jsx is 520 lines — still maintainable, but if more sections are added consider extracting BeforeAfter and the 6 large data arrays (DIFFERENTIATORS, INVESTOR_JOURNEY, etc.) into a /landing/data.js to keep the JSX file presentational only.",
+    "Differentiator testid is derived from `title.toLowerCase().replace(/\\s+/g,'-')` which breaks if a future title contains punctuation (e.g. apostrophes/slashes). Consider passing an explicit `slug` field in the DIFFERENTIATORS tuples for stability.",
+    "Animated metrics in landing-transformation use AnimatedNumber so DOM text mid-animation is intermediate (e.g. 219 instead of 245). Tests must read the final value with a small wait or assert on the `to` prop. Not a bug, but flagged for future tests."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (22/22)", "frontend": "100% on all spec items"},
+  "test_credentials": "n/a — public demo routes",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression file used: /app/backend/tests/test_iter25_invest.py + /app/backend/tests/test_iter24_stripe_warmup.py (22 tests, ~3.5s, all green). Public preview URL: https://hospitality-ai-12.preview.emergentagent.com. Key landing testids confirmed: landing-hero, landing-what-is, landing-transformation, landing-differentiators, landing-journey, landing-final, landing-cta-invest, landing-cta-operate, landing-engine-invest, landing-engine-operate, landing-flow-step-0..5, landing-transformation-metrics, landing-diff-{slug}, landing-journey-step-0..5, landing-final-cta. Nav testids (note the SPACES in label-derived ids): 'nav-asset intelligence', 'nav-acquisition intelligence', 'nav-investment portfolio', 'nav-portfolio', 'nav-method', 'nav-pricing', 'nav-mode-invest', 'nav-mode-operate'. Iter26 mutated-useState gate on /invest/asset/demo works — Edit Inputs now mutates demo analysis live."
+}

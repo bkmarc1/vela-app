@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="9" time="179.256" timestamp="2026-05-08T12:38:56.629615+00:00" hostname="agent-env-3f0ef416-9a50-458b-9d40-23408771a059"><testcase classname="backend.tests.test_iter14_ingest_visual" name="test_health" time="0.258" /><testcase classname="backend.tests.test_iter14_ingest_visual.TestIngestListingUrl" name="test_ingest_returns_images_and_visual_analysis" time="5.352" /><testcase classname="backend.tests.test_iter14_ingest_visual.TestIngestListingUrl" name="test_ingest_rejects_non_http_url" time="0.118" /><testcase classname="backend.tests.test_iter14_ingest_visual.TestVisualizeRegression" name="test_visualize_three_new_keys" time="38.919" /><testcase classname="backend.tests.test_iter14_ingest_visual.TestVisualizeRegression" name="test_visualize_image_for_new_key" time="13.984" /><testcase classname="backend.tests.test_iter14_ingest_visual.TestPropertiesDemo" name="test_get_property_demo" time="0.122" /><testcase classname="backend.tests.test_iter14_ingest_visual.TestPropertiesDemo" name="test_get_property_demo_portfolio" time="0.103"><failure message="AssertionError: {&quot;detail&quot;:&quot;Not Found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_iter14_ingest_visual.py:167: in test_get_property_demo_portfolio
+    assert r.status_code == 200, r.text
+E   AssertionError: {"detail":"Not Found"}
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iter14_ingest_visual.TestUpgradeEndpoints" name="test_upgrade_cart" time="60.108"><failure message="AssertionError: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_iter14_ingest_visual.py:183: in test_upgrade_cart
+    assert r.status_code == 200, r.text[:300]
+E   AssertionError: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iter14_ingest_visual.TestUpgradeEndpoints" name="test_upgrade_listing" time="60.227"><failure message="AssertionError: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_iter14_ingest_visual.py:194: in test_upgrade_listing
+    assert r.status_code == 200, r.text[:300]
+E   AssertionError: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase></testsuite></testsuites>

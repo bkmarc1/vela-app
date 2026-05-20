@@ -1,0 +1,41 @@
+{
+  "summary": "Iter66 router refactor + SVG logomark validated. Backend 24/24 green (18 iter66 + 6 iter65 regression) covering /, /api/, /api/auth/{me,logout,session}, /api/properties/demo, /api/portfolio/demo, /api/dashboard/{news,competition}, /api/payments/checkout (pro=200, start=400), /api/invest/{analyze,draft,draft/{id}}, /api/visual-analysis/warmup, /api/transform (422 on bad payload, no 500), /api/ingest/listing-url (no 500), /api/sync/{listing,listings}. Frontend logomark renders correctly on all 6 routes (Nav 22px + Footer 28px, fill=#0F52FF) with full Propul8 wordmark and all 5 center links (Invest/Operate/Portfolio/Market Trends/Pricing) on every route. No console pageerrors; only expected 401s from /api/auth/me when unauthenticated. Pricing checkout mock interception works and Pro CTA fires POST /api/payments/checkout. Found and fixed one refactor regression: routers/operate.py.sync_listing called helper _short_id that was only defined in routers/invest.py, causing /api/sync/listing to return 500 with NameError. Added a local _short_id() to operate.py (uuid already imported). After the fix, /api/sync/listing returns 200 as required by the iter66 review.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter66_regression.py",
+    "/app/backend/tests/test_iter65_regression.py",
+    "/app/test_reports/pytest/iter66_results.xml"
+  ],
+  "action_items": [
+    "Review the testing-agent fix to /app/backend/routers/operate.py (added local _short_id helper). Consider whether _short_id should live in a shared util module (e.g. routers/_helpers.py) since it is now defined in two routers — minor duplication."
+  ],
+  "critical_code_review_comments": [
+    "BUG FIXED by testing agent — /app/backend/routers/operate.py line 1681 referenced _short_id without import/definition. This caused POST /api/sync/listing to 500 with NameError: name '_short_id' is not defined. Added a local _short_id(prefix, length) helper near the top of operate.py (uuid was already imported). This is the exact endpoint the iter66 review enumerated; without this fix the refactor would have shipped a regression. Root cause: the helper lived in server.py originally, was lifted into routers/invest.py during the refactor, but the operate.py call site was not updated.",
+    "Minor code-quality note: _short_id is now defined in both routers/invest.py (line 1545) and routers/operate.py. Recommend extracting into a single shared helper module to keep the refactor DRY.",
+    "routers/invest.py is 1574 lines — already at the high end of file-size guideline (>700 = split recommended). Consider another decomposition pass (e.g., invest_parse.py for the parse/screenshot/brochure endpoints + invest_analyze.py for the analyze pipeline).",
+    "routers/operate.py is 1786 lines — same comment as above; ripe for further split (visualize / upgrade / visual-analysis / ingest / transform / sync).",
+    "Logomark.jsx is clean — pure SVG, no runtime deps, scales correctly, both data-testids (propul8-logomark, propul8-wordmark) wired in. Nav.jsx + Footer.jsx import is clean and renders consistently."
+  ],
+  "updated_files": [
+    "/app/backend/routers/operate.py",
+    "/app/backend/tests/test_iter66_regression.py"
+  ],
+  "success_rate": {
+    "backend": "100% (24/24: 18 iter66 + 6 iter65) — only after applying _short_id fix",
+    "frontend": "100% — logomark + wordmark render on all 6 routes; checkout mock interception works"
+  },
+  "test_credentials": "None required — all routes tested via public demo + Emergent OAuth not exercised.",
+  "seed_data_creation": "TEST_iter66_prop sync listing job (auto-progresses through queued→submitted→confirmed states per operate.py worker; harmless).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter66 refactor verified. Backend regression suite is /app/backend/tests/test_iter66_regression.py (18 tests, hits every router boundary). The _short_id helper was missing in operate.py post-refactor — fixed in place by adding a local definition. If another router-split iteration happens, audit every NameError-prone helper (_short_id, _invest_hash, _slug_hints, _scrape_listing, _quick_visual_analysis, _parse_ai_json) before shipping. Lazy forwarders for _scrape_listing / _quick_visual_analysis / _slug_hints (in invest.py from operate.py) and _parse_ai_json (in both from server.py) are intact and working. Logomark testid is 'propul8-logomark', wordmark is 'propul8-wordmark', footer is 'propul8-footer'. Frontend center-link testids: nav-invest / nav-operate / nav-portfolio / nav-market trends / nav-pricing (note: 'market trends' has a space). Stripe checkout calls can take 30-90s — keep test timeouts ≥90s. REACT_APP_BACKEND_URL = https://hospitality-ai-12.preview.emergentagent.com.",
+  "rca of the issue": "POST /api/sync/listing returned 500 (NameError) because routers/operate.py line 1681 called _short_id() but the helper was never imported or defined in operate.py — it had been lifted into routers/invest.py as part of the iter66 refactor. Reproduction: send minimal valid ListingSyncRequest payload to /api/sync/listing → 500. Mitigation applied: added local 'def _short_id(prefix, length=10): return prefix + uuid.uuid4().hex[:length]' to routers/operate.py just below the EMERGENT_LLM_KEY constant (uuid was already imported at line 12). After the fix, the endpoint returns 200 with a sync job document. Long-term fix: extract _short_id into a shared util module (e.g. routers/_helpers.py) so both invest.py and operate.py can import it."
+}

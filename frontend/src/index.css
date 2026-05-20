@@ -1,0 +1,578 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 60 9% 95%;
+    --card: 0 0% 7%;
+    --card-foreground: 60 9% 95%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 60 9% 95%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 60 9% 95%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 60 9% 95%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 10%;
+    --ring: 0 0% 100%;
+    --radius: 0.875rem;
+  }
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   Propul8 — Premium PropTech / Hospitality command center.
+   Unified warm off-white aesthetic (Aman Residences × Airbnb Pro ×
+   Linear-clarity). The previous dual-shell (parchment + espresso) has
+   been retired — both --vela-* and --inv-* tokens now resolve to the
+   same light palette so every page reads as a single cohesive product.
+──────────────────────────────────────────────────────────────────── */
+:root {
+  /* Warm-neutral surfaces */
+  --vela-bg-primary:      #FAFAFA;  /* zinc-50 page background */
+  --vela-bg-surface:      #FFFFFF;
+  --vela-bg-elevated:     #F4F4F5;  /* zinc-100 */
+  --vela-bg-dark:         #F4F4F5;
+  /* Charcoal type */
+  --vela-text-primary:    #09090B;  /* zinc-950 */
+  --vela-text-secondary:  #52525B;  /* zinc-600 */
+  --vela-text-muted:      #A1A1AA;  /* zinc-400 */
+  --vela-text-on-dark:    #09090B;
+  /* ONE strong accent — electric ultramarine (startup-friendly) */
+  --vela-accent-bronze:   #B8956A;  /* primary action */
+  --vela-accent-olive:    #B8956A;
+  --vela-accent-hover:    #A07F56;
+  --vela-accent-muted:    #F5F1EA;
+  --vela-border:          #E4E4E7;  /* zinc-200 */
+  /* Status — calm, no neon */
+  --vela-status-positive: #10B981;
+  --vela-status-warning:  #F59E0B;
+  --vela-status-negative: #EF4444;
+  /* Card system — premium, rounded, light shadows */
+  --vela-radius-card:     16px;
+  --vela-radius-image:    12px;
+  --vela-radius-button:   12px;
+  --vela-shadow-card:     0 1px 2px rgba(9,9,11,0.04), 0 1px 6px rgba(9,9,11,0.04);
+  --vela-shadow-card-h:   0 4px 14px rgba(9,9,11,0.07);
+}
+
+html, body, #root {
+  background: #FAFAFA;
+  color: #09090B;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Manrope', -apple-system, sans-serif;
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #FAFAFA;
+  color: #09090B;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: #B8956A;
+  color: #FFFFFF;
+}
+
+/* Hide the platform-injected "Made with Emergent" floating badge —
+   institutional product surface should not advertise the builder. */
+#emergent-badge { display: none !important; }
+
+.font-display {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  letter-spacing: -0.03em;
+}
+
+/* Retained alias for backward compatibility — used heavily in legacy
+   markup as "small label / kicker" text. Now maps to Manrope (medium
+   weight, slightly tighter tracking) so the entire app reads in a
+   single PropTech font family, not a monospaced data-terminal look. */
+.font-mono-tight {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-feature-settings: 'tnum';
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   Canonical Propul8 type scale — used uniformly across every page.
+   H1 page · H2 section · H3 card · Body · Small · Kicker.
+──────────────────────────────────────────────────────────────────── */
+.ts-h1 {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+  color: #09090B;
+}
+.ts-h2 {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: clamp(28px, 3.4vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  color: #09090B;
+}
+.ts-h3 {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: clamp(20px, 2.2vw, 26px);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: #09090B;
+}
+.ts-body {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+  font-weight: 400;
+  color: #52525B;
+}
+.ts-small {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: #52525B;
+}
+.ts-kicker {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: #B8956A;
+}
+
+.kicker {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #52525B;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.kicker-bronze {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #B8956A;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Subtle warm divider — used between editorial sections */
+.section-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(184,149,106,0.20), transparent);
+}
+
+/* Insight callout — small warm "Why this matters" card */
+.insight-snippet {
+  border-left: 1px solid rgba(184,149,106,0.35);
+  padding-left: 12px;
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: 10.5px;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: #52525B;
+}
+
+.hairline {
+  border-color: rgba(255,255,255,0.06);
+}
+
+.vela-card {
+  background: #FFFFFF;
+  border: 1px solid #E4E4E7;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(9,9,11,0.04);
+  transition: box-shadow 300ms ease, transform 300ms ease, border-color 300ms ease;
+}
+.vela-card:hover {
+  border-color: #D4D4D8;
+  box-shadow: 0 4px 14px rgba(9,9,11,0.07);
+  transform: translateY(-1px);
+}
+
+.vela-input {
+  background: #FFFFFF;
+  border: 1px solid #E4E4E7;
+  border-radius: 12px;
+  color: #09090B;
+  padding: 0.95rem 1.1rem;
+  font-size: 0.95rem;
+  width: 100%;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.vela-input:focus {
+  outline: none;
+  border-color: #B8956A;
+  box-shadow: 0 0 0 3px rgba(184,149,106,0.10);
+}
+.vela-input::placeholder {
+  color: #A1A1AA;
+}
+
+/* Tiny formula-source label — used wherever a metric has provenance */
+.source-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #52525B;
+}
+.source-label--user      { color: #B8956A; }
+.source-label--extracted { color: #B8956A; }
+.source-label--benchmark { color: #B8956A; }
+.source-label--estimated { color: #52525B; }
+
+.vela-btn {
+  background: #B8956A;
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  border-radius: 12px;
+  padding: 0.85rem 1.5rem;
+  transition: transform 200ms ease, background 200ms ease, box-shadow 200ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(184,149,106,0.18);
+}
+.vela-btn:hover { background: #A07F56; box-shadow: 0 6px 20px rgba(184,149,106,0.25); }
+.vela-btn:active { transform: scale(0.98); }
+.vela-btn[disabled] { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+.vela-btn-ghost {
+  background: transparent;
+  color: #09090B;
+  border: 1px solid #E4E4E7;
+  padding: 0.8rem 1.4rem;
+  border-radius: 12px;
+  font-size: 13.5px;
+  letter-spacing: -0.005em;
+  transition: border-color 200ms ease, background 200ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.vela-btn-ghost:hover { border-color: #B8956A; background: rgba(184,149,106,0.04); }
+
+.fade-up {
+  animation: fadeUp 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+@keyframes shimmerSweep {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.shimmer {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.02) 0%,
+    rgba(255,255,255,0.05) 50%,
+    rgba(255,255,255,0.02) 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmerSweep 1.6s linear infinite;
+}
+
+@keyframes panelSlideIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+.panel-slide-in {
+  animation: panelSlideIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.action-pill {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #52525B;
+  padding: 5px 10px;
+  border-radius: 2px;
+  border: 1px solid rgba(9,9,11,0.10);
+  background: transparent;
+  transition: border-color 200ms ease, color 200ms ease, background 200ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.action-pill:hover {
+  border-color: rgba(9,9,11,0.40);
+  color: #09090B;
+  background: rgba(9,9,11,0.04);
+}
+
+.bg-grain {
+  background-image:
+    radial-gradient(rgba(9,9,11,0.04) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+.divider-h {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+}
+
+/* Recharts axis tick override */
+.recharts-cartesian-axis-tick-value {
+  fill: #52525B !important;
+  font-family: 'Inter', 'Manrope', sans-serif !important;
+  font-size: 10px !important;
+}
+.recharts-cartesian-grid line { stroke: rgba(255,255,255,0.04) !important; }
+
+/* Nav hover states — Tailwind JIT can't parse interpolated class strings, so
+   we write them as static rules. */
+.nav-link-light:hover { color: #09090B; }
+.nav-link-dark:hover  { color: #FAFAFA; }
+
+/* ────────────────────────────────────────────────────────────────────
+   Propul8 INVEST — Unified light shell (terracotta accent).
+   The previous dark Bloomberg-terminal espresso shell is retired —
+   /invest now matches the rest of the app. All --inv-* tokens map to
+   the same warm-off-white palette so existing inline references still
+   resolve without code churn.
+──────────────────────────────────────────────────────────────────── */
+.vela-invest {
+  --inv-bg-primary:      #FAFAFA;
+  --inv-bg-surface:      #FFFFFF;
+  --inv-bg-elevated:     #F4F4F5;
+  --inv-bg-deep:         #F4F4F5;
+  --inv-text-primary:    #09090B;
+  --inv-text-secondary:  #52525B;
+  --inv-text-muted:      #A1A1AA;
+  --inv-accent-bronze:   #B8956A;   /* muted olive · primary */
+  --inv-accent-gold:     #10B981;   /* warm clay · secondary highlight */
+  --inv-signal-up:       #B8956A;
+  --inv-signal-down:     #EF4444;
+  --inv-signal-neutral:  #52525B;
+  --inv-border:          #E4E4E7;
+  --inv-border-strong:   #D4D4D8;
+
+  background: var(--inv-bg-primary);
+  color: var(--inv-text-primary);
+  min-height: 100vh;
+}
+.vela-invest * { border-color: var(--inv-border); }
+
+.vela-invest .inv-num {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  letter-spacing: -0.02em;
+  font-feature-settings: 'tnum';
+}
+.vela-invest .inv-display {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  letter-spacing: -0.03em;
+  color: var(--inv-text-primary);
+}
+.vela-invest .inv-kicker {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: 9.5px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--inv-text-muted);
+}
+.vela-invest .inv-kicker-bronze {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: 9.5px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--inv-accent-bronze);
+}
+.vela-invest .inv-card {
+  background: var(--inv-bg-surface);
+  border: 1px solid var(--inv-border);
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(9,9,11,0.04);
+  transition: box-shadow 300ms ease, transform 300ms ease, border-color 300ms ease;
+}
+.vela-invest .inv-card:hover {
+  border-color: var(--inv-border-strong);
+  box-shadow: 0 8px 28px rgba(9,9,11,0.07);
+  transform: translateY(-1px);
+}
+.vela-invest .inv-card--elevated { background: var(--inv-bg-elevated); }
+.vela-invest .inv-card--deep    { background: var(--inv-bg-elevated); }
+.vela-invest .inv-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(9,9,11,0.08), transparent);
+}
+.vela-invest .inv-rule {
+  height: 1px;
+  background: var(--inv-border);
+}
+.vela-invest .inv-input {
+  background: var(--inv-bg-surface);
+  border: 1px solid var(--inv-border);
+  border-radius: 14px;
+  color: var(--inv-text-primary);
+  padding: 0.95rem 1.1rem;
+  font-size: 0.95rem;
+  font-family: 'Inter', 'Manrope', sans-serif;
+  letter-spacing: -0.01em;
+  width: 100%;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.vela-invest .inv-input:focus {
+  outline: none;
+  border-color: var(--inv-accent-bronze);
+  box-shadow: 0 0 0 3px rgba(184,149,106,0.10);
+}
+.vela-invest .inv-input::placeholder { color: var(--inv-text-muted); }
+
+.vela-invest .inv-btn {
+  background: #B8956A;
+  color: #FFFFFF;
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  text-transform: none;
+  border-radius: 14px;
+  padding: 0.85rem 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid transparent;
+  transition: background 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(184,149,106,0.15);
+}
+.vela-invest .inv-btn:hover    { background: #A07F56; box-shadow: 0 6px 20px rgba(184,149,106,0.22); }
+.vela-invest .inv-btn:active   { transform: scale(0.98); }
+.vela-invest .inv-btn[disabled] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+.vela-invest .inv-btn-ghost {
+  background: transparent;
+  color: var(--inv-text-secondary);
+  border: 1px solid var(--inv-border);
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-weight: 500;
+  font-size: 13.5px;
+  letter-spacing: -0.005em;
+  text-transform: none;
+  padding: 0.8rem 1.4rem;
+  border-radius: 14px;
+  transition: border-color 200ms ease, color 200ms ease, background 200ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.vela-invest .inv-btn-ghost:hover {
+  border-color: var(--inv-accent-bronze);
+  color: var(--inv-text-primary);
+}
+
+.vela-invest .inv-pill {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--inv-text-secondary);
+  padding: 4px 9px;
+  border-radius: 1px;
+  border: 1px solid var(--inv-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.vela-invest .inv-pill--up      { color: var(--inv-signal-up);      border-color: rgba(125,191,143,0.30); }
+.vela-invest .inv-pill--down    { color: var(--inv-signal-down);    border-color: rgba(201,122,106,0.30); }
+.vela-invest .inv-pill--neutral { color: var(--inv-accent-bronze);  border-color: rgba(196,167,137,0.30); }
+
+.vela-invest .inv-glow {
+  position: relative;
+}
+.vela-invest .inv-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 2px;
+  background: linear-gradient(140deg, rgba(196,167,137,0.08), transparent 50%);
+  pointer-events: none;
+}
+
+.vela-invest .inv-grid {
+  background-image:
+    linear-gradient(rgba(196,167,137,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(196,167,137,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.vela-invest .inv-grain {
+  background-image: radial-gradient(rgba(196,167,137,0.06) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+.vela-invest table { border-collapse: collapse; width: 100%; }
+.vela-invest th, .vela-invest td {
+  border-bottom: 1px solid var(--inv-border);
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font-size: 12px;
+}
+.vela-invest th {
+  font-family: 'Inter', 'Manrope', sans-serif;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--inv-text-muted);
+  font-weight: 500;
+}
+
+@keyframes invFadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.vela-invest .inv-fade-up { animation: invFadeUp 700ms cubic-bezier(0.16,1,0.3,1) both; }
+
+@keyframes invShimmer {
+  0%   { opacity: 0.55; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.55; }
+}
+.vela-invest .inv-pulse { animation: invShimmer 2.6s ease-in-out infinite; }
+
+/* Accordion expand reveal (calm, no slide). */
+@keyframes inv-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+

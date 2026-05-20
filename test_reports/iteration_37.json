@@ -1,0 +1,26 @@
+{
+  "summary": "Frontend acceptance testing for iter37 (VELA OPERATE cinematic rebuild + DRY refactor to shared WWVDPanel/ScrollSpyTabsBar). All 14 review_request features verified end-to-end via Playwright on desktop (1920x1080) and mobile (390x844). 0 functional bugs found. INVEST regression: shared components emit correct testids (invest-section-wwvd, invest-wwvd-card-0/1/2, invest-tab-bar with all 8 tabs); Actions tab scroll-spy works (0->831). OPERATE cinematic flow Opener->Thinking->Dashboard with all timings correct. All 7 sections render. 6 leak cards, 5 style tabs (active swap works), 7 execution cards + master autopilot button. Visualize CTA navigates to /visualize/demo/0; Autopilot master button navigates to /upgrade/demo/0. No horizontal overflow on mobile. Regression routes (/, /pricing, /portfolio/demo, /dashboard/demo) load with 0 page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Iter36 P1 DRY refactor properly executed: shared WWVDPanel and ScrollSpyTabsBar consumed by both INVEST and OPERATE shells; testIdPrefix prop preserves contract integrity (invest-* on INVEST, operate-* on OPERATE). Theme prop drives dark/light styling cleanly.",
+    "Operate.jsx orchestrates STAGE machine (LANDING/OPENER/THINKING/DASHBOARD) with simple useState — no over-engineering. analyzedInput memoization via useMemo is correct.",
+    "Cinematic timings precisely match spec (opener boot 1100ms, reveal 1300ms, insights 2400ms, ready 3600ms; thinking 600ms x6 = 3600ms). Total ~7s onboarding.",
+    "Minor nit: handleAnalyze setStage transitions to STAGE.THINKING on URL submit, skipping the OPENER stage. Demo path enters OPENER. Confirm with product whether real URL flow should also use the cinematic OPENER for brand consistency.",
+    "Pre-existing console 401 noise from /api/me probe still present (not iter37 regression) — recommend wrapping the auth probe in try/catch to suppress benign 401s in console."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "Demo routes — no auth needed.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "iter37 verified: (a) /operate landing renders with VELA OPERATE headline, subtitle 'Build your asset's living AI hospitality twin', helper 'VELA Network™ · trained on thousands of analyzed hospitality assets.', URL input + Analyze button + See live demo CTA. (b) Demo flow: clicking demo enters OperateOpener (insights 0/1/2 appear, continue button appears after ~3.6s) -> click continue -> OperateThinking (6 phases 0..5) -> auto-loads OperateBreakdown after ~3.6s. (c) Dashboard sections all present: hero/verdict/wwvd/revenue-leaks/transformation-engine/listing/autopilot. (d) Hero: VELA INDEX displays '78/100', Hospitality DNA 'Digital Nomad Hub', 6 metrics + verdict-line all rendered. (e) Tab bar: all 6 testids (overview/actions/leakage/transformation/listing/autopilot) — leakage tab click scrolls to that section (verified scroll position changed). (f) WWVD: 3 cards under operate prefix. (g) Revenue leaks: 6 leak cards, total '€15,156 / 34% of potential'. (h) Transformation engine: 5 style tabs, clicking tab-2 swaps active name from 'Warm Contemporary' to 'Mediterranean Minimal'; Visualize CTA routes to /visualize/demo/0 with testid 'operate-style-cta'. (i) Autopilot: master CTA + 7 execution cards, master click routes to /upgrade/demo/0. (j) operate-back-btn returns to landing. (k) INVEST regression: invest-section-wwvd, 3 invest-wwvd-card-* cards, invest-tab-bar, all 8 invest-tab-* tabs (including invest-tab-str-potential, invest-tab-renovation-plan, invest-tab-risk-flags, invest-tab-exit-strategy, invest-tab-final-verdict), Actions tab scrolls 0->831. /invest/asset/manual still renders. (l) /, /pricing, /portfolio/demo, /dashboard/demo all 0 page errors. (m) Mobile 390px: no horizontal overflow on landing/opener/dashboard, all sections render.",
+  "rca of the issue": "No issues — feature ship is clean. iter36 P1 DRY refactor recommendation has been properly addressed in this iteration."
+}

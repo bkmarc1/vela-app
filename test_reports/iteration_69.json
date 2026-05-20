@@ -1,0 +1,51 @@
+{
+  "summary": "Iter68 Phase 1 testing — Backend: 14/14 pytest PASS (NEW endpoints /api/portfolio-intel/negotiation-pack + POST/GET /pipeline + 11 regression endpoints). Frontend: Made-with-Emergent badge REMOVED from all 8 routes (PASS). Footer rebrand PASS (black bar #0A0A0A, gold #8B7355 small-caps 'PROPUL8 · HOSPITALITY ASSET INTELLIGENCE', copy '© 2026 Propul8. All rights reserved.', footer-index-explainer-link → /index-explained). Propul8 Index explainer page (/index-explained) PASS — all testids present: propul8-index-page, index-kicker, index-headline ('FICO score'), index-scale-section, 4 zone cards, 5 pillar rows, index-trust-line containing all required phrases. Operate Demo Mode UI PASS — DEMO badge + 6 phases + freshness 'Demo data · synthesized for product preview' all render. Backend regression (12 endpoints): all 200/401 as expected. CRITICAL UNVERIFIABLE: AcquisitionHero (invest-hero-confidence, smart-buy-envelope, negotiation-pack-btn, save-pipeline-btn) is implemented in code but UNREACHABLE through any tested UI flow — see action_items.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/payments/checkout", "issue": "Spec in review_request said field 'plan' but actual API uses 'tier'. Test updated to use 'tier' — endpoint works correctly. Spec drift only."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AcquisitionHero / InvestDashboard", "issue": "/invest/asset/{assetId} routes redirect to /invest (Landing). Direct nav to /invest/asset/owned-koukaki-str and /invest/asset/demo-athens-koukaki both redirect; AcquisitionHero never mounts. Cannot verify invest-hero-confidence (Data Confidence HIGH/MEDIUM/LOW), smart-buy-envelope, smart-buy-headline ('Bid between'), negotiation-pack-btn, save-pipeline-btn rendering. Code exists at /app/frontend/src/components/invest/dashboard/AcquisitionHero.jsx lines 215, 352, 404, 418 — but no flow exposes it. The invest-demo-run-btn renders only InvestOpener preview (45/100 PASS verdict) and not the full dashboard.", "selector": "[data-testid='invest-hero-confidence']", "priority": "HIGH"}
+    ],
+    "integration_issues": [
+      {"flow": "NEGOTIATE verdict end-to-end UI", "issue": "Cannot complete because dashboard route not accessible. Backend POST /api/invest/analyze returns 200 with keys [asset_id, input, snapshot, offer_intelligence, true_roi, transformation, negotiation, market_signals, str_comps, max_buy_price, analysis_version, generated_at] but the response is NEVER surfaced via AcquisitionHero in normal user flow. Negotiation Pack flow + Save to Pipeline flow could not be tested in UI.", "affected_selectors": ["[data-testid='negotiation-pack-btn']", "[data-testid='negotiation-pack-output']", "[data-testid='save-pipeline-btn']"]}
+    ],
+    "design_issues": [
+      {"screen": "/invest landing", "issues": ["Trust line still reads 'Propul8 never calculates from unverified data. Every field shows its data quality — low-quality fields require confirmation…'. The word 'data quality' (lowercase) still appears here. The spec says rename Data Quality → Data Confidence everywhere; this lowercase usage may be intentional (it is a general phrase, not the label) but worth a review."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter68_phase1.py",
+    "/app/test_reports/pytest/iter68_phase1.xml"
+  ],
+  "action_items": [
+    "HIGH: AcquisitionHero (the dashboard hero with new iter68 testids invest-hero-confidence + smart-buy-envelope + negotiation-pack-btn + save-pipeline-btn) is never reachable. The /invest/asset/:assetId React Route exists (App.js line 56) but the page redirects to /invest. Either (a) make /invest/asset/owned-koukaki-str render a seeded analysis so the AcquisitionHero appears, or (b) wire the invest-demo-run-btn to mount the full InvestDashboard instead of (or in addition to) the InvestOpener preview. Without a reachable entry point, the NEGOTIATE Smart-Buy Envelope feature is untestable end-to-end via UI even though backend + component code are present.",
+    "MEDIUM: Spec mismatch — review_request lists testid 'operate-landing-demo-btn'. Actual testid on /operate is 'operate-demo-btn'. Either align spec or rename testid. Demo card 'Try Athens Demo' is correctly clickable via text and triggers operate-thinking with DEMO DATA badge + 6 phases + freshness disclaimer.",
+    "LOW: review_request lists payments/checkout field as 'plan' but the API uses 'tier'. Either accept both or update spec to reflect 'tier'.",
+    "LOW: /invest landing trust-line lowercase 'data quality' phrase — confirm whether intentional or needs rename."
+  ],
+  "critical_code_review_comments": [
+    "Footer.jsx is clean institutional rebuild — black bar + gold logomark + small-caps brand line + copy + index-explainer link, no extraneous content.",
+    "portfolio_intel.py negotiation-pack uses deterministic-first leverage points then merges Claude response — same pattern as iter67 signals; UI never blocks. Comps + sensitivity numbers reconcile with verdict. Pack returns asking_price_eur + smart_buy_target_eur + aggressive_offer_eur correctly.",
+    "portfolio_intel.py pipeline POST uses status='In Negotiation' when verdict==NEGOTIATE else 'Evaluating' — correct. _id excluded via doc.pop('_id', None).",
+    "OperateThinking renders correctly with 6 demo phases + freshness in DEMO mode; LIVE mode (4 phases + 'DATA REFRESHED EVERY 6 HOURS') not tested because no live URL submitted.",
+    "Propul8Index.jsx is a complete one-page explainer with all 16 requested testids and proper FICO-style ranges (0-59 / 60-74 / 75-89 / 90-100) and pillar weights (20/25/20/20/15 sums to 100).",
+    "CRITICAL: There is a routing/state gap between /invest analyze flow and /invest/asset/:assetId dashboard. AcquisitionHero is dead code from a user-flow standpoint until this is wired. This is the single biggest gap in iter68."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter68_phase1.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 pytest)",
+    "frontend": "~70% — 6/9 directly verifiable features PASS (badge removal, footer rebrand, footer-link nav, /index-explained, /invest no 'Data Quality' text, /operate demo mode). 3 NEGOTIATE-flow features (invest-hero-confidence, smart-buy-envelope + negotiation-pack-btn, save-pipeline-btn) cannot be reached via UI."
+  },
+  "test_credentials": "None required.",
+  "seed_data_creation": "Pytest TestPipeline creates 1 pipeline doc with title 'TEST_iter68_pipeline'; not auto-cleaned. Recommend MongoDB delete_many({title:/^TEST_iter68_/}) on pipeline_assets before next iteration to avoid pollution.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter68 Phase 1 backend is 100% green. The blocker for full frontend verification is the /invest/asset/:assetId route — it currently redirects to /invest. To test AcquisitionHero new testids (invest-hero-confidence, smart-buy-envelope, smart-buy-headline, negotiation-pack-btn, save-pipeline-btn, negotiation-pack-output), main agent must make this route render a seeded NEGOTIATE-band analysis. Backend payload that lands in NEGOTIATE 65-79 band confirmed via POST /api/invest/analyze body {asset_id:'test-neg', city:'Athens', asking_price_eur:280000, property_type:'Apartment', m2:60, rooms:2, condition:'good'}. Operate landing demo testid is 'operate-demo-btn' (not 'operate-landing-demo-btn'). Index explainer is live and complete at /index-explained.",
+  "rca of the issue": "The new AcquisitionHero testids are implemented in /app/frontend/src/components/invest/dashboard/AcquisitionHero.jsx (lines 215, 352, 404, 418). They are mounted only inside <InvestDashboard /> (pages/invest/InvestDashboard.jsx line 356). InvestDashboard is routed at /invest/asset/:assetId (App.js line 56). When navigated directly with a sample assetId, the component appears to short-circuit and redirect to /invest — likely because it relies on a piece of state (e.g., analysis fetched and held in client-side context or a router-state object) that is only populated by an in-app analyze action. The invest-demo-run-btn fires an analyze call that renders the InvestOpener preview but does not navigate to /invest/asset/:assetId with the result. Fix: either persist the analyze result to context+route, or have InvestDashboard fetch analysis by assetId when state is empty (using a deterministic demo asset_id like 'demo-athens-koukaki')."
+}

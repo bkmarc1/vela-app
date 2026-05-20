@@ -1,0 +1,36 @@
+{
+  "summary": "Iter 56 — Source Ledger v2 + Data Lock. Backend: 10/10 endpoint tests PASS (GET/POST lock/unlock, upsert idempotency, no _id leak, validation). Frontend Operate: Source Ledger renders with correct header/columns/rows, lock toggle works (toast 'Locked · Bedrooms as ground truth', pill flips to 'Locked' with check, source becomes 'User locked · {date}', button turns olive green #3F5F4A with closed-padlock icon). Locking 3 fields updates header badge to '3 LOCKED'. Year built (null value) has disabled lock button. Unlock restores original status pill + source label + toast 'Unlocked · …'. Persistence verified — re-navigated through cinematic Operate flow, city + property_type stay locked. Frontend Invest: Source Ledger accordion at testid 'invest-section-source-ledger' renders correctly once 'invest-toggle-sources' progressive disclosure is opened, lock for 'Asking price' (€149,000) works and shows 'User locked' source. Regression: /portfolio/demo and /dashboard/demo render. Visual palette respected — only olive/white/off-white/charcoal/muted/taupe.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter56_sources.py",
+    "/app/test_reports/pytest/iter56_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "InvestDashboard accordions (including invest-section-source-ledger) only mount AFTER the user clicks the 'invest-toggle-sources' progressive disclosure toggle on the Decision Strip. The review_request implied a single click on 'any toggle' to expand — confirmed: invest-toggle-sources expands the full underwriting block which contains the new Source Ledger section. This is intentional but worth documenting in the user flow.",
+    "SourceLedger.jsx (244 lines) is well-contained but the FIELD_ORDER list is hard-coded — when new provenance fields are added the ledger will silently append them after the ordered set. Consider centralising the canonical order in dataProvenance.js.",
+    "SourceLedger uses axios directly with REACT_APP_BACKEND_URL — consistent with project pattern. No _id leakage verified by API tests.",
+    "Backend endpoints under /api/sources/{asset_id} correctly upsert on (asset_id, field) composite key, exclude _id via projection, and serialize datetime to ISO strings."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter56_sources.py (new — 10 pytest cases for source-lock endpoints)"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "None — all routes used are public demos",
+  "seed_data_creation": "Test locks created under asset_id 'TEST_iter56_demo' are torn down by module fixture; one cleanup pass also unlocks 'demo' city/property_type/bedrooms/asking_price during frontend test.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Source Ledger v2 ships clean — both Operate (asset_id='demo') and Invest (asset_id=analysis.asset_id || 'demo') hydrate locks from GET /api/sources/{asset_id} on mount. The Operate cinematic flow takes ~10s (Thinking 5s + Opener 3.2s + click [data-testid=operate-opener-continue-btn]). The Invest cinematic flow takes ~9s before showing the Opener screen which has a 'Open Investor Terminal' button (NOT 'Continue') — click it, then click [data-testid=invest-toggle-sources] to expand the full underwriting strip, then click [data-testid=invest-section-source-ledger-toggle] to reveal the SourceLedger. Per-row testid pattern: source-row-{key}, source-lock-btn-{key}. Mocked items still present: Market Position (Market Average=72, Top Listings=86 constants) and has_real_comparables=false — both deferred until user pastes Apify token (per iter 56 prompt).",
+  "rca of the issue": "n/a — no regressions found"
+}

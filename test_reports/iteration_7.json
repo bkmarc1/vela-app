@@ -1,0 +1,34 @@
+{
+  "summary": "VELA Iteration 7 — backend + frontend verified. 12/12 backend pytest cases passed (visualize_layout 4 prompt sections, shopping_cart ITEMS+ALTERNATIVES with '·' separator + ≥5 fields, contractor_pack 4-section regression, update_listing 4 sections, activate_upgrade 6 sections, export_pack 5 sections, approve_apply correctly returns 400 as a frontend-only action, demo regression, auth+CRUD, fallback unit, unknown-action 400). Frontend: 'Asset Score™' kicker confirmed, all 7 ActionPills render with correct operational labels and data-testid='yield-{i}-action-{key}'. Approve & Apply flips badge to 'APPROVED · IN QUEUE' (green) without opening TransformPanel. Visualize panel renders 4 Copy buttons. Build Real Cart renders 16 cart-item nodes, 8 'Open' links → google.com search URLs, copy-cart button, and 'ESTIMATED TOTAL €41,736 / ALTERNATIVES' section. ANALYSIS_STAGES array contains 6 entries including 'Preparing execution packages…' and the analysis-stages testid is wired (auth-gated render). 1 critical bug found and fixed by tester: missing `import { toast } from 'sonner'` in /app/frontend/src/pages/Dashboard.jsx caused 'toast is not defined' runtime overlay on Approve & Apply click — added import (consistent with Analyze/Pricing/TransformPanel).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter7.py",
+    "/app/test_reports/pytest/iter7_results.xml"
+  ],
+  "action_items": [
+    "Tester applied a 1-line fix: added `import { toast } from 'sonner';` to /app/frontend/src/pages/Dashboard.jsx (was using toast.success without importing it). Please verify this is acceptable and consider adding a lint rule for missing imports."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard.jsx used toast.success in handleAction() but never imported toast from sonner — would have hard-crashed every Approve & Apply click in production (caught by tester, fixed).",
+    "server.py is now ~1145 lines — TRANSFORM_DIRECTIVES dict alone is ~140 lines. Strongly recommend extracting prompts/directives to /app/backend/prompts/ for maintainability (raised in iter6 too, still outstanding).",
+    "approve_apply has frontendOnly:true in transformActions.js but is not present in TRANSFORM_DIRECTIVES on the backend — this is intentional per design, but worth a code comment in server.py noting the deliberate exclusion to prevent future devs from 'fixing' a perceived gap.",
+    "Two on_event deprecations (FastAPI startup/shutdown) — switch to lifespan context manager.",
+    "Iter5/Iter6 stale tests (test_iter6.py asserts old visualize_layout 'ROOM CONFIG / FURNITURE PLACEMENT / SPACE FLOW' headings) will now fail — should be retired or migrated to iter7 shape."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter7.py (new)",
+    "/app/frontend/src/pages/Dashboard.jsx (added missing sonner toast import)"
+  ],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "100% of critical iter7 flows"},
+  "test_credentials": "Mongo session insertion per /app/memory/test_credentials.md — applied via _create_session() in test_iter7.py.",
+  "seed_data_creation": "1 TEST_Iter7 property + iter7 user/session per run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter7 introduces 7 PRIMARY ActionPills and 2 new primitives: backend directive 'export_pack' (5 sections: EXECUTIVE/PROCUREMENT/CONTRACTOR/LISTING/APPROVAL) and frontend-only 'approve_apply' (NOT in TRANSFORM_DIRECTIVES — backend returns 400 by design, do not treat as failure). visualize_layout reshaped to 4 prompt sections (MIDJOURNEY/DALL/STABLE/BEFORE-AFTER). shopping_cart now returns ITEMS (6-10 lines, '·' separator, supplier field) + ALTERNATIVES. activate_upgrade expanded to 6 sections (VISUAL/PROCUREMENT/CONTRACTOR/LISTING/APPROVAL/TIMELINE). Tests use word-substring heading matcher to be lenient on AI variations. test_iter6.py is stale and will fail on visualize_layout/activate_upgrade — should be deleted.",
+  "rca of the issue": "Bug RCA — 'toast is not defined' on Approve & Apply: Dashboard.jsx adds handleAction() routing for frontend-only actions (lines 53-55) which calls `toast.success(...)`, but the file did not import toast. Other files (Analyze.jsx:3, Pricing.jsx:1, TransformPanel.jsx:3) all import via `import { toast } from 'sonner';`. Reproduction: navigate to /dashboard/demo → click any 'APPROVE & APPLY' pill → red runtime-error overlay with 'ReferenceError: toast is not defined' covers screen. Mitigation: added the same import line at the top of Dashboard.jsx. Re-verified: status flips to APPROVED · IN QUEUE, toast appears, no console errors, TransformPanel does not open."
+}

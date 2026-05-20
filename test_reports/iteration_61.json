@@ -1,0 +1,25 @@
+{
+  "summary": "Iter61 — all five parallel mandates verified end-to-end. NEW /api/invest/parse-brochure endpoint passes empty-body 400, invalid/image-only 422 (with 'image-only/screenshot' hint), and full off-plan PDF round-trip via Claude Sonnet 4.5 returning all 7 new fields (is_off_plan, completion_year, developer_name, project_name, price_from_eur, price_to_eur, unit_count). Regression on /invest/parse-text, /invest/parse-screenshot, /sources/{id}, /location/analyze, /dashboard/news, /dashboard/competition all green. Frontend: Invest landing has new brochure-upload section (dropzone, hidden file input, staged preview with filename+size, X clear button, green Analyze Brochure CTA) and small 'Try the demo · KOUKAKI · 3BR · €485K →' pill — old Manual CTA and giant demo card both removed. Nav now reads 'Market Trends' (label only; route /dashboard preserved). /dashboard/demo rewritten: PROPCYCLE · MARKET TRENDS kicker + LIVE · ATHENS pulsing pill, 'Athens real estate — live.' title, '30 minutes' refresh subtitle, PROPCYCLE MARKET READ summary card, LEAD STORY featured card with 'Read full story' link, 3 more news cards in grid, portfolio hint banner; old competition graph removed. /portfolio/demo shows 4 demo Athens assets (Koukaki, Glyfada, Plaka, Exarcheia), each with ▲/▼ arrow + % delta + '24H VS MARKET' label, aggregate score 78/100, +6 PTS VS ATHENS MARKET pill. Top3Fixes source verified — P1/P2/P3 olive pills replace 01/02/03.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": { "ui_bugs": [], "integration_issues": [], "design_issues": [] },
+  "test_report_links": [
+    "/app/backend/tests/test_iter61_brochure.py",
+    "/app/test_reports/pytest/iter61_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is ~4500 lines — past the 700-line guideline; main agent should plan a modular split (routers per domain: invest, dashboard, portfolio, operate, properties) in a follow-up refactor",
+    "Portfolio asset signals (▲/▼ % delta) are MOCKED — deterministically derived from asset id hash; clearly flagged as marketing-style ticker. Wire to real market data in a future iter.",
+    "/api/invest/parse-brochure catches a bare Exception around the LLM call and returns 502 — fine, but logs would benefit from preserving the original AI error code for debugging."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter61_brochure.py (NEW)"
+  ],
+  "success_rate": { "backend": "100% (12/12)", "frontend": "100% (all flagged elements verified across /invest, /dashboard/demo, /portfolio/demo + Top3Fixes source)" },
+  "test_credentials": "None required — all tested endpoints public; demo property/portfolio/dashboard endpoints public",
+  "seed_data_creation": "Hand-crafted minimal valid PDF in test (Koukaki Heights off-plan brochure with 24 units, EUR 380k start) used for parse-brochure round-trip.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "test_iter61_brochure.py is the regression file for iter61. parse-text body field is 'listing_text' not 'text'; location/analyze requires 'address' OR (lat,lng). PDF hand-crafted util _make_minimal_pdf() generates a small valid PDF for both image-only-fail and off-plan-success cases. Top3Fixes result is rendered through /operate flow (not /operate/result/demo); P1/P2/P3 olive pill verified in source.",
+  "rca of the issue": "N/A — clean iteration."
+}

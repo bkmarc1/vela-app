@@ -1,0 +1,39 @@
+{
+  "summary": "Iter67 RETEST — all 5 frontend gaps and 1 backend nit reported in iteration_67.json are now FIXED. Backend regression suite /app/backend/tests/test_iter67_portfolio_intel.py: 20/20 PASS (11 iter66 regression + 9 portfolio-intel including signal, portfolio-signal, exit-plan, action-plan). Frontend Portfolio Intelligence (/portfolio): (1) H1 fixed — now reads 'Know what you paid, what it is worth today, and what to do next.' with proper space after comma. (2) AI Portfolio signal renders IMMEDIATELY (<3s) — observed: 'AI Signal: Portfolio up 22.02% from purchase value. Best action: hold income-producing assets unless exit prices exceed current valuation by 5–8%.' No more 'Generating…' stuck state. (3) All 3 per-asset signals render IMMEDIATELY with deterministic fallback — verified Hold/Sell/Refinance verb present in each (Koukaki/Glyfada/Paros all show 'Hold. Strong X% yield on cost…'). (4) AssetIntelCard score testids: [data-testid='score-asset'/'score-sell'/'score-liq'/'score-conf'] each count=3 PASS. (5) MiniStats testids: [data-testid='stat-gross/net/monthly/occ/adr/yoc/yonow/mortgage'] each count=3 PASS. (6) /asset/owned-koukaki-str — asset-detail-ai-signal wrapper renders immediately with deterministic Hold sentence. (7) Action Plan tab — clicking asset-tab-action shows <ol data-testid='action-steps'> with action-step-1..5 ALL visible immediately (deterministic content: Refresh photography / Prepare income report / Get broker valuation / List above floor / Optimise ADR). (8) build-exit-plan-btn → exit-plan-output appears within ~25s with all 11 plan fields rendered (Recommended Listing €229K, Realistic Offer Low/High, Target Buyer, Documents to Prepare, Design Improvements, Income Proof, Best Selling Angle, Furnished Recommendation, Expected Timeline, Final Recommendation — 1922 chars). Palette: #0F52FF count=0, #B8956A count=58 — gold regression PASS.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter67_portfolio_intel.py",
+    "/app/test_reports/pytest/iter67_retest_results.xml"
+  ],
+  "action_items": [
+    "Optional cleanup: KPI testid names in the review_request spec (kpi-mortgage-total/kpi-net-equity/kpi-net-income/kpi-monthly-income/kpi-occupancy/kpi-adr/kpi-appreciation) do not match the actual implementation (kpi-equity-total/kpi-equity-pct/kpi-annual-gross/kpi-annual-net/kpi-net-cashout/kpi-portfolio-score/kpi-portfolio-liq). All 12 KPIs DO render with testids — only the names differ. iter67 originally passed with the implemented names so this is a spec-vs-code naming drift, not a regression. Either align the spec or rename in code if the spec is canonical.",
+    "Optional: Asset detail tab content divs use [data-testid='tab-{id}'] but the clickable tab buttons use [data-testid='asset-tab-{id}']. This is consistent and OK, just worth documenting so future testing agents target asset-tab-{id} for clicks and tab-{id} for content."
+  ],
+  "critical_code_review_comments": [
+    "Deterministic-instant fallback pattern in PortfolioIntelligence.jsx (deterministicSignal useMemo + displaySignal = signal || deterministicSignal) is clean and removes the previous 'Generating…' UX bug — perfect approach.",
+    "AssetDetail.jsx ActionTab now initializes useState with deterministicSteps so action-step-N testids exist on first paint; Claude swaps them in after fetch — this is the correct pattern.",
+    "F-string typo on portfolio_intel.py:370 (f'detail' key) has been resolved; the action-plan response now returns clean {n,title,detail} per step.",
+    "asset-detail-ai-signal wrapper now ALWAYS renders (deterministic fallback) — no more empty signal banner.",
+    "H1 whitespace bug fixed at portfolio-intel-title — confirmed via DOM text-content.",
+    "Test pollution mitigation: I ran the MongoDB delete_many({title: /^TEST_/}) cleanup before frontend tests (deleted 1 doc left from previous test runs). owned_assets is now empty so the 3 demo-asset fallback (DEMO_OWNED_ASSETS in lib/portfolioIntelligence.js) correctly populates the cards. Recommend backend POST /api/portfolio-intel/asset accept a test_mode/demo flag that excludes them from the /owned list to prevent future pollution."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (20/20 pytest)",
+    "frontend": "100% on the 5 targeted retest fixes — H1, ai-portfolio-signal-text, asset-intel-signal-*, score-*/stat-* testids, asset-detail-ai-signal, action-steps + action-step-1..5, build-exit-plan-btn → exit-plan-output all PASS"
+  },
+  "test_credentials": "None required.",
+  "seed_data_creation": "Backend pytest re-creates 1 TEST_iter67 asset via POST /api/portfolio-intel/asset; cleaned up post-suite via MongoDB delete_many({title:/^TEST_/}) — left owned_assets at count=0 so future frontend runs hit the 3-demo-asset fallback cleanly.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter67 RETEST PASSED — all 5 targeted gaps are fixed. Run backend regression via: REACT_APP_BACKEND_URL=https://hospitality-ai-12.preview.emergentagent.com pytest /app/backend/tests/test_iter67_portfolio_intel.py -v. Before frontend tests on /portfolio, ALWAYS delete TEST_* docs from MongoDB owned_assets so the 3 demo assets render. Demo asset IDs (hardcoded constants, NOT in DB): owned-koukaki-str, owned-glyfada-flat, owned-paros-cottage. Asset detail tabs: clickable buttons use [data-testid='asset-tab-{id}'] and content panels use [data-testid='tab-{id}']. Action Plan content uses <ol data-testid='action-steps'> wrapping [data-testid='action-step-1..5']. Scenario keys (NOT sell-today/hold-12m/refi-cashout/etc as some specs suggest) — actual keys are: sell-today, hold-12m, hold-3y, renovate-sell, renovate-rent, refinance-hold, optimize-str. AI signal latency: deterministic fallback paints in <500ms; Claude replaces 1-3s later. exit-plan-output takes 8-30s due to Claude live call.",
+  "rca of the issue": "All 4 frontend gaps and 1 backend nit from iter67 have been mitigated via the fixes E1 applied: (a) Missing testids — added simple testids score-asset/sell/liq/conf on score circles and stat-* on MiniStats in AssetIntelCard; added data-testid='asset-detail-ai-signal' wrapper; added <ol data-testid='action-steps'> with action-step-N children. (b) AI signal stuck on Generating — solved with deterministicSignal useMemo + displaySignal = signal || deterministicSignal pattern so the banner is NEVER empty; Claude replaces text in background without blocking initial paint. (c) H1 whitespace — fixed by adjusting JSX spans. (d) f-string typo on portfolio_intel.py:370 — corrected. Verified end-to-end via 20/20 backend pytest + comprehensive Playwright run."
+}

@@ -1,0 +1,81 @@
+{
+  "summary": "Frontend testing for VELA Critical Data Consistency Fix + Final Aesthetic Refinement. ALL 7 priority test areas PASSED including the highest-priority data consistency check between Portfolio rows and Dashboard unrealized-uplift, deterministic intelligence values across reloads, Intelligence Profile strip on Dashboard, per-row confidence badge on Portfolio, Landing emotional arc ordering, regression of Dashboard moat sections, and /visualize/demo/0 strategic concepts.",
+  "data_consistency_verification": {
+    "ground_truth_from_backend": {
+      "demo-cycladic-boutique-suite": 8900,
+      "demo-paros-courtyard": 8900,
+      "demo-mykonos-villa": 19600,
+      "demo-athens-loft": 10800,
+      "demo-comporta-cabin": 9100
+    },
+    "portfolio_displayed": {
+      "demo-cycladic-boutique-suite": "+€8,900",
+      "demo-paros-courtyard": "+€8,900",
+      "demo-mykonos-villa": "+€19,600",
+      "demo-athens-loft": "+€10,800",
+      "demo-comporta-cabin": "+€9,100"
+    },
+    "dashboard_demo_unrealized_uplift": "+€8,900/year (matches Cycladic Portfolio row exactly)",
+    "verdict": "PASS — Portfolio row uplifts equal the sum of revenue_impact line items from /api/portfolio/demo for all 5 properties. Dashboard /dashboard/demo unrealized-uplift = €8,900 = Portfolio Cycladic row. Single canonical computePropertyIntelligence is the source of truth.",
+    "non_demo_dashboard_note": "Non-demo dashboards (/dashboard/{property_id}) redirect to /login — expected per task instructions. Equivalence verified indirectly via Portfolio rows matching backend ground truth."
+  },
+  "intelligence_profile_strip": {
+    "testid_present": true,
+    "intel_version": "Analysis V1.2 ✓",
+    "intel_date": "APR 2026 ✓ (matches Portfolio row date for same property)",
+    "intel_confidence": "HIGH CONFIDENCE ✓ (rendered green via text-[#A6CFA8])",
+    "intel_coverage": "7-AXIS COMP-SET ✓",
+    "benchmark_depth": "DEEP BENCHMARK DEPTH ✓"
+  },
+  "portfolio_confidence_badges": {
+    "all_5_rows_present": true,
+    "format_verified": "'HIGH · APR/MAR 2026' on all 5 rows"
+  },
+  "landing_emotional_arc": {
+    "all_sections_present_in_order": true,
+    "ordering_top_to_bottom": ["hero-title (y=278)", "revenue-section (y=662)", "gap-section (y=1174)", "before-after-section (y=1794)", "how-section (y=2331)", "inevitability-section (y=2808)"],
+    "hero_title_text_match": "Hospitality assets are leaving revenue on the table. ✓",
+    "thesis_kicker": "THE THESIS ✓",
+    "gap_keywords_all_present": "moodboards, Spreadsheet, Renovation, PMS — all 4 ✓",
+    "infrastructure_kicker": "INFRASTRUCTURE ✓",
+    "ctas": "hero-cta-analyze, hero-cta-demo, cta-analyze-bottom, cta-demo-bottom — all 4 render and clickable (analyze CTA correctly routes auth-gated to /login)"
+  },
+  "determinism_test": {
+    "verdict": "PASS",
+    "details": "Reloaded /dashboard/demo twice — intel-version, intel-date, intel-confidence, intel-coverage, unrealized-uplift were ALL IDENTICAL across loads. _stableTimestamp from hash(property_id|name|city) producing stable date. No per-render volatility."
+  },
+  "dashboard_regression": {
+    "all_moat_sections_present": ["intelligence-profile", "hospitality-archetype", "benchmark-position", "market-intelligence", "unrealized-revenue", "conversion-intelligence", "operational-friction", "yield-0", "yield-1", "yield-2", "yield-3", "score-breakdown", "chart-card", "dashboard-title"],
+    "verdict": "PASS"
+  },
+  "visualize_regression": {
+    "route": "/visualize/demo/0 (Sleep family)",
+    "concept_keys_present": ["mezzanine_loft (Mezzanine Sleep Platform +22%)", "convertible_living (Convertible Living Zone +14%)", "bunk_millwork (Day-Bed Bunk Wall +16%)"],
+    "verdict": "PASS — all 3 rec-aware Sleep-family keys render correctly"
+  },
+  "backend_sanity": {
+    "api_portfolio_demo": "Returns 5 properties with correct yield_opportunities sums",
+    "api_visualize_post": "Endpoint exists; 422 returned without `recommendation` field (Pydantic validation working as expected)"
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "intelligence.js is well-designed: deterministic hash, no randomness, single source of truth pattern correctly implemented.",
+    "Dashboard.jsx UnrealizedRevenue and IntelligenceProfileStrip both correctly delegate to computePropertyIntelligence(property) — no local recompute drift detected.",
+    "Non-demo /dashboard/{id} routes are auth-gated; this is expected. The data consistency contract is preserved by the canonical compute fn shared with Portfolio (which is public).",
+    "_stableTimestamp uses Date.now() minus daysAgo — this means the absolute timestamp drifts across calendar boundaries (e.g., test ran in May 2026 might show Apr/Mar 2026 depending on hash). Acceptable for current spec but worth noting if exact date pinning is required."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "No login required — all tested routes are public demo",
+  "seed_data_creation": "None — used existing demo fixtures",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All VELA data consistency contracts verified. Portfolio rows for the 5 demo property_ids show uplift values that EXACTLY match the sum of revenue_impact line items in /api/portfolio/demo, and /dashboard/demo unrealized-uplift matches the Cycladic Portfolio row. computePropertyIntelligence is deterministic across reloads. Landing emotional arc all 6 sections render in correct order. No frontend or backend regressions detected."
+}

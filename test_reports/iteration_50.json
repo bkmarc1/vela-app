@@ -1,0 +1,32 @@
+{
+  "summary": "Re-tested PropOS UX after accordion testid double-prefix fix. ALL 7 TESTS PASS (7/7). Homepage proof cards (3), Invest minimal view with 5-card decision strip + hidden accordions + 4 toggles, View Full Report toggle reveals 11 accordions with bare testids (invest-section-strategy/yield/final-verdict all count=1), strip card content matches spec vocabulary (PASS / Below Market / Medium), Operate cinematic + dashboard renders all required testids, Spitogatos URL routes to listing-unreadable-screen with 4 path buttons, brand chrome (propos-nav, propos-footer, title 'PropOS', no VELA/STAYOS in body) verified.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "InvestOpener has a 3.2s phase gate before the continue button becomes clickable (pointer-events-none until phase=='ready'). Tests must wait for [data-ready='true'] before clicking; a plain force-click on the bare testid is silently swallowed because the parent wrapper still has pointer-events-none until the 3.2s timeout elapses. Consider gating with a single data-state attribute or disabling the button rather than overlaying pointer-events on the wrapper (less brittle for automation).",
+    "Unreadable-screen path buttons use bare testids unreadable-path-{retry|paste|upload|manual} instead of the listing-unreadable-path-{id} pattern hinted in spec. Not blocking, but inconsistent naming with listing-unreadable-screen container — recommend aligning prefixes.",
+    "InvestDashboard.jsx is 622 lines — exceeds 700-line threshold soon; consider extracting INTRO state machine and the showFull section into smaller hooks/components."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A", "frontend": "100%" },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Cinematic intro on /invest/asset/* requires waiting ~3.2s for phase='ready' on InvestOpener. Robust pattern: page.wait_for_selector('[data-testid=\"invest-opener-continue-btn\"][data-ready=\"true\"]', timeout=20000) before clicking — using force=True on the bare testid before that fails silently due to parent pointer-events-none. Same applies for Operate (Continue Analysis button mounts after ~3-7s). For Spitogatos UnreadableListing path buttons, real testids are unreadable-path-{retry,paste,upload,manual} (NOT listing-unreadable-path-*).",
+  "test_credentials": "None required (public preview)",
+  "tests_passed": {
+    "TEST1_homepage_proof_cards": true,
+    "TEST2_invest_minimal_view": true,
+    "TEST3_toggle_reveals_accordions": true,
+    "TEST4_strip_card_text_content": true,
+    "TEST5_operate_regression": true,
+    "TEST6_spitogatos_unreadable": true,
+    "TEST7_brand": true
+  }
+}

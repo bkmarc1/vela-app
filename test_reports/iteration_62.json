@@ -1,0 +1,30 @@
+{
+  "summary": "Iter62 — Three structural fixes verified end-to-end. Backend: 9/9 pytest green on /app/backend/tests/test_iter62_news_filter.py. /api/dashboard/news returns 12 items (max enforced server-side, 12 is the upper bound — see minor note), EVERY item passes the RE-keyword whitelist, ZERO items contain any of the 26 banned keywords (suicide/murder/election/celebrity/sports/etc), cache_key athens_re_news_v2 confirmed in MongoDB, fresh-fetch after cache delete reapplies the strict filter. Regression: /api/dashboard/competition 200, /api/location/analyze 200, /api/invest/parse-brochure 400 on empty body, /api/sources/{id} non-500. Frontend: /portfolio/demo fully matches spec — NO market-pulse / Live Market Pulse / Greek Reporter / GTP Headlines surface in Portfolio HTML; new header 'My assets. My performance. My upside.' + kicker 'Portfolio · My assets' + olive 'Analyze New Asset' CTA all present; KPI overview shows 4/4 assets, 78/100 avg, €1.7M, €160K, plus Best=Glyfada/86, Underperforming=Exarcheia/66, Risk=Moderate 25%; Aggregate Position card contains 78 + +6 PTS VS MARKET pill + 3 horizontal bars (78/72/86); 4 asset cards each with ▲/▼ signal, 24H VS MARKET label, You/Market/Top mini-stats and portfolio-signal-{id} testid. /market-trends renders the iter61 design, nav 'Market Trends' link is active (also matches /dashboard), 5 visible article cards all real-estate/tourism-investment (Tourism Spatial Framework, MARE MED III, Four Seasons Mykonos, Folegandros/Lefkada Airbnb, Athens visitors). Zero banned keywords in visible text. /dashboard/demo alias renders the same page.",
+  "backend_issues": { "critical": [], "minor": [
+    {"endpoint": "/api/dashboard/news", "issue": "Pydantic limit param max is 12 (le=12). Iter62 request mentions limit=20 for testing — server rejects 20 with 422. Strict filter still validated against the maximum-allowed limit=12 sample (full pool exposed). If users actually want to surface more than 12 items the cap must be raised."}
+  ] },
+  "frontend_issues": { "ui_bugs": [], "integration_issues": [], "design_issues": [] },
+  "test_report_links": [
+    "/app/backend/tests/test_iter62_news_filter.py",
+    "/app/test_reports/pytest/iter62_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Raise the /api/dashboard/news limit ceiling from 12 → 20 so the next testing agent can probe a wider window for filter leaks, as iter62 brief instructed."
+  ],
+  "critical_code_review_comments": [
+    "dashboard_news.py is clean (~310 lines); EXCLUDED_KEYWORDS hard-return-zero logic is correctly applied BEFORE any keyword scoring — bullet-proof against the 'Joint Suicide Attempt' regression.",
+    "Per-asset daily signal % on Portfolio is MOCKED (deterministic hash of asset id, not real market data) — flagged in iter61 review; remains MOCKED in iter62. To wire to AirDNA when token arrives.",
+    "Portfolio DEMO_ASSETS (4 hardcoded Athens demos) is MOCKED seed used when /api/properties returns empty — clearly used for the /portfolio/demo route screenshot demo; real authed users see /portfolio with their own scored assets.",
+    "server.py is ~4500 lines (carried-over comment from iter61) — past the 700-line guideline; modular split still recommended."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter62_news_filter.py (NEW)"
+  ],
+  "success_rate": { "backend": "100% (9/9 pytest)", "frontend": "100% (all iter62 mandate elements verified across /portfolio/demo, /market-trends, /dashboard/demo)" },
+  "test_credentials": "None — all flows tested via public demo routes.",
+  "seed_data_creation": "Test deletes news_cache collection in MongoDB to force fresh fetch path; baseline _baseline_items() fallback covered by the post-delete fetch returning RE-only items.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "test_iter62_news_filter.py is the iter62 regression file. limit query param on /api/dashboard/news is capped at 12 — do NOT use 20+. To force a cache miss, delete the news_cache collection in MongoDB (mongo URL + DB_NAME from backend/.env) then GET /api/dashboard/news. Cache key to look up is 'athens_re_news_v2'. Excluded-keyword grep MUST be against page.innerText (not document.outerHTML) — JS bundle minified names can contain substrings like 'selection' that look like a 'election' match.",
+  "rca of the issue": "N/A — iter62 mandate cleanly verified."
+}

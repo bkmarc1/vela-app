@@ -1,0 +1,41 @@
+{
+  "summary": "VELA Iter25 — verified Stripe status endpoint Mongo-backed fix + Visualize concept-card slug testids. Backend 14/14 pytest pass (100%): Stripe checkout for pro/investor/developer return cs_test_ sessions; status endpoint reads from db.payment_transactions and returns persisted record (status='pending', payment_status='initiated', amount_total=49.0, currency='eur', tier='pro') without calling Stripe — NO MORE 502; unknown session → 404; idempotent across 3 reads; webhook with no signature → {ok:false} cleanly (not 500); /api/visual-analysis/warmup → {ok:true} 3/3. Frontend: Pricing 4 CTAs render with correct labels, Investor CTA fires POST /api/payments/checkout with {tier:'investor', origin_url:window.location.origin}; ?cancelled=1 strips URL; Visualize /visualize/demo/0 — concept-card-mezzanine_loft, concept-card-convertible_living, concept-card-bunk_millwork ALL PRESENT (Iter24 regression fixed); Workspace dark editorial confirmed (Concept Render badge color rgb(240,229,208) on rgba(26,19,13,0.7)); Dashboard warmup fires on mount (still 2x in dev StrictMode). All major routes 200 OK.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Pricing poll banner on 404", "issue": "When /pricing?session=<unknown> hits the Mongo-backed status endpoint and gets a fresh 404, pollStatus catches the error within ~50ms and resets pollMessage→null, so the pricing-poll-banner DOM node may not be observable to a user (or to Playwright). Functional behavior is correct (toast.error 'Could not confirm payment status.' fires), but the banner UX is effectively invisible for the unknown-session case. Real Stripe round-trips will produce a paid record fast enough that this is low-impact. Consider holding pollMessage for a min 800ms before clearing on 404, or showing the banner unconditionally for first 2s.", "affected_selectors": ["[data-testid='pricing-poll-banner']"]},
+      {"flow": "Dashboard warmup", "issue": "POST /api/visual-analysis/warmup fires TWICE on /dashboard/demo mount (React 18 StrictMode double-effect in dev). Carryover from Iter24. Fire-and-forget so harmless in prod, but a useRef guard would silence it.", "affected_selectors": []}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter25_stripe_status.py",
+    "/app/test_reports/pytest/iter25_results.xml"
+  ],
+  "action_items": [
+    "(Optional UX) Keep pricing-poll-banner visible for a minimum of ~1s on 404 path so users see the 'Confirming payment…' state before the toast.",
+    "(Optional) Gate Dashboard.jsx warmup useEffect with a useRef so React StrictMode doesn't fire it twice in dev."
+  ],
+  "critical_code_review_comments": [
+    "server.py:2659 — status endpoint correctly reads with projection {_id:0} and returns 404 on missing. Idempotent. ✅",
+    "server.py:2687 — webhook returns {ok:false} on signature failure (no 5xx). ✅",
+    "server.py:2641 — checkout persists metadata{tier,label}; status reads (rec.metadata.tier or rec.tier) — defensive fallback is good.",
+    "Pricing.jsx:101-126 — pollStatus's 6-attempt retry only loops on success path (when payment_status not paid yet). On exception (incl 404) it fires toast.error and exits — matches spec intent.",
+    "Dashboard.jsx still > 1100 lines (carryover from iter22/24) — split candidate.",
+    "server.py:2604-2607 — emergent Stripe import still inside the request handler; warmup endpoint should also import emergentintegrations.payments.stripe.checkout to fully eliminate cold-start on first /payments/checkout call."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter25_stripe_status.py"
+  ],
+  "success_rate": {"backend": "100% (14/14 pytest)", "frontend": "~95% (poll-banner visibility race only)"},
+  "test_credentials": "n/a — public demo routes; STRIPE_API_KEY=sk_test_emergent in backend/.env",
+  "seed_data_creation": "Test created 4 fresh Stripe Checkout sessions (cs_test_*) and corresponding payment_transactions records (payment_status='initiated', status='pending'). Mongo-backed status reads consumed these records.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter25 fixes confirmed: (1) /api/payments/status/{session_id} now reads from Mongo — NO Stripe API call on read path — returns 200 with persisted record; (2) Visualize page now exposes data-testid='concept-card-{slug}' for all three slugs. Dark editorial heroes preserved. Dashboard warmup-on-mount still doubles in dev StrictMode (carryover, not a new regression). The 'pricing poll banner on 404' UX flicker is the only minor item, and it's optional polish — not a regression. Test file: /app/backend/tests/test_iter25_stripe_status.py covers checkout-suite + status (Mongo-backed) + webhook + warmup as a regression suite.",
+  "rca of the issue": "Iter24 RCA was: emergentintegrations CheckoutStatusResponse Pydantic model rejected metadata=StripeObject. Iter25 fix: server.py /api/payments/status/{session_id} no longer calls stripe.get_checkout_status() — instead reads the record from db.payment_transactions which was inserted at create-time and is updated by the /api/webhook/stripe handler. This decouples the read path from emergent's Stripe proxy (which doesn't support session retrieval anyway), making polling fast, cheap, idempotent, and immune to the Pydantic bug. Verified: pytest TestStripeStatusPoll all 3 tests green (200/200/200, identical bodies). Iter24 visualize concept-card slug testids issue was ALREADY in code in Iter24 build, but flake was AI-cold-start — re-validated in Iter25 with 60s wait and all three slugs render correctly."
+}

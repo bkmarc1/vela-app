@@ -1,0 +1,43 @@
+{
+  "summary": "VELA Iter24 — Stripe checkout + status poll + vision warmup + dark editorial hero + pricing UX. Backend: 8/10 pytest pass. Stripe checkout creates real cs_test sessions for Pro/Investor/Developer. Free/bad-tier/bad-origin all 400. Vision warmup OK. CRITICAL: GET /api/payments/status/{session_id} returns 502 due to Pydantic validation error inside emergentintegrations lib — CheckoutStatusResponse.metadata receives StripeObject (not dict) — breaks the post-redirect polling UX. Frontend: pricing UI passes (4 tiers, CTAs, Most Popular badge, loading spinner+'Redirecting…' on investor click, pricing-poll-banner on ?session=, cancelled query strips URL). Dashboard fires warmup on mount (fire-and-forget) and hero now dark editorial with cream title rgb(240,229,208). Workspace hero dark bg #1A130D + 'Concept Render' badge confirmed. All regression testids on /, dashboard, workspace, pricing pass. Visualize concept-card slug testids (mezzanine_loft/convertible_living/bunk_millwork) NOT present — cards render visually but lack the spec'd data-testid slugs.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/payments/status/{session_id}", "issue": "Returns 502 'Stripe provider error'. Backend log: ERROR Stripe status check failed: Unexpected error retrieving session status: 1 validation error for CheckoutStatusResponse / metadata / Input should be a valid dictionary [type=dict_type, input_value=<StripeObject ...>, input_type=StripeObject]. The emergentintegrations CheckoutStatusResponse Pydantic model rejects Stripe's metadata when returned as a StripeObject (not a plain dict). Effect: every successful Stripe checkout cannot have its status polled — pricing-poll-banner will time out and show error to users returning from Stripe.", "priority": "CRITICAL"}
+    ],
+    "minor": [
+      {"endpoint": "GET /api/payments/status/{session_id}", "issue": "Subsequent calls to a freshly-created session sometimes return 404 'No such checkout.session' from Stripe v1 — observed in logs after the first 502. Likely a cascade from the Pydantic failure aborting the request before any caching. Will resolve once metadata bug is fixed."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Visualize concept cards", "issue": "Spec'd testids data-testid='mezzanine_loft' / 'convertible_living' / 'bunk_millwork' NOT present on /visualize/demo/0. Cards render visually (Mezzanine Sleep Platform / Convertible Living Zone / Day-Bed Bunk Wall titles confirmed) but the slug-based testids aren't wired. Only generic testids found: visualize-studio, back-to-dashboard, visualize-loading.", "affected_selectors": ["[data-testid='mezzanine_loft']","[data-testid='convertible_living']","[data-testid='bunk_millwork']"]},
+      {"flow": "Dashboard warmup", "issue": "POST /api/visual-analysis/warmup fires TWICE on /dashboard/demo mount — likely React StrictMode double-effect in dev. Fire-and-forget so harmless, but worth noting."}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter24_stripe_warmup.py",
+    "/app/test_reports/pytest/iter24_results.xml"
+  ],
+  "action_items": [
+    "FIX HIGH PRIORITY: /api/payments/status/{session_id} returns 502 — emergentintegrations CheckoutStatusResponse Pydantic model fails on metadata=StripeObject. Either (a) coerce s.metadata to dict() before constructing response, or (b) wrap stripe.get_checkout_status() and read raw fields, or (c) upgrade emergentintegrations if a newer version handles StripeObject. The current /pricing?session= polling UX is broken end-to-end because of this.",
+    "Add data-testid slugs (mezzanine_loft / convertible_living / bunk_millwork) to the 3 concept cards on Visualize page if regression spec requires them.",
+    "Optional: gate the dashboard warmup useEffect with a ref so it only fires once even under React StrictMode."
+  ],
+  "critical_code_review_comments": [
+    "server.py line 2604-2610: try/except imports `StripeCheckout` inside the request handler — this is the cold-start cost that warmup is meant to eliminate. Consider moving the import to module top-level (guarded) so it's hot from the first request.",
+    "server.py line 2670-2680: idempotent guard on payment_transactions update is good. But the response itself (line 2682-2688) is built from `s` which already failed Pydantic validation — once the lib bug is fixed, also confirm `s.metadata` is dict-like at this point.",
+    "Dashboard.jsx still > 1100 lines — flagged in iter22 report, still pending split."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter24_stripe_warmup.py"
+  ],
+  "success_rate": {"backend": "80% (8/10 pytest)", "frontend": "~95% (visualize slug testids missing)"},
+  "test_credentials": "n/a — public demo routes; STRIPE_API_KEY=sk_test_emergent already in backend/.env",
+  "seed_data_creation": "Test created 4 real Stripe Checkout sessions (cs_test_*) via the live Stripe test key during pytest run. Records inserted into mongo payment_transactions with payment_status='initiated' (verified via code review of insert_one block at server.py:2636).",
+  "retest_needed": true,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "After main agent fixes the metadata Pydantic bug, re-run pytest /app/backend/tests/test_iter24_stripe_warmup.py — expect all 10 to pass (currently 2 fail on TestStripeStatusPoll). Frontend dark editorial heroes + warmup + Stripe checkout flow verified live; no need to re-test those. Pricing-poll-banner UX visually confirmed but its real polling can only be validated after the status endpoint is healed. Stripe checkout returned valid URLs: https://checkout.stripe.com/c/pay/cs_test_a1... for pro/investor/developer. Backend logs at /var/log/supervisor/backend.err.log show the exact Pydantic validation error.",
+  "rca of the issue": "ROOT CAUSE — /api/payments/status/{session_id} 502: stripe.get_checkout_status(session_id) inside emergentintegrations attempts to construct a CheckoutStatusResponse Pydantic model where field `metadata: dict` strict-validates the input. Stripe's Python SDK returns metadata as a stripe.stripe_object.StripeObject (a dict-subclass-but-not-strict-dict). Pydantic v2 with strict=True rejects it. REPRO: POST /api/payments/checkout {tier:'pro', origin_url:'https://hospitality-ai-12.preview.emergentagent.com'} → save session_id → GET /api/payments/status/{session_id} → 502. MITIGATION OPTIONS: (1) In server.py /payments/status, do not use stripe.get_checkout_status — call the raw Stripe API directly via httpx and build the response dict manually, OR (2) monkey-patch / wrap the returned StripeObject with `dict(s.metadata)` BEFORE the Pydantic constructor runs (requires patching emergentintegrations), OR (3) pin to an emergentintegrations version where metadata field is `Dict[str, Any]` non-strict, OR (4) catch the ValidationError inside the handler and fall back to a raw response built from the underlying http payload."
+}

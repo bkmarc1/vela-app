@@ -1,0 +1,89 @@
+{
+  "summary": "Live Playwright execution of all 7 PropOS UX cleanup tests on preview URL. 2/7 passed (TEST6 Spitogatos paste, TEST7 Brand). 5/7 failed - most critically TEST2/3/4/5 are blocked by a regression where the cinematic intro 'Opener' screen never transitions to the actual dashboard (InvestOpener.onContinue and OperateOpener.onContinue handlers do not advance introStage to DONE, so InvestDashboard / Operate Hero never mount). TEST1 has a data-testid naming mismatch (code uses 'landing-proof-{id}', spec expects 'landing-proof-card-{id}'). Three proof cards with correct titles ARE rendered.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "InvestOpener / InvestDashboard.jsx (lines 293-300)",
+        "issue": "CRITICAL: Clicking the 'Open Investor Terminal' button (data-testid='invest-opener-continue-btn') does NOT transition introStage from OPENER -> DONE. The dashboard never mounts. Tested twice with 3-6s waits after click; DOM still shows only invest-opener-* testids and invest-decision-strip/strip-decision/strip-price-position/strip-market-support/strip-risk/strip-next-action/invest-detail-toggles/invest-toggle-* never appear. This blocks TEST2, TEST3, TEST4 entirely.",
+        "selector": "[data-testid='invest-opener-continue-btn']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "OperateOpener / Operate page",
+        "issue": "CRITICAL: Same opener regression - clicking 'Continue Analysis' followed by 'operate-opener-continue-btn' never transitions to the rebuilt hero. operate-section-hero, operate-perf-*, operate-opp-*, operate-action-*, operate-build-plan-cta are all absent (0/11). Page is stuck on operate-opener-* testids.",
+        "selector": "[data-testid='operate-opener-continue-btn']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "landing/Hero.jsx (line 129)",
+        "issue": "data-testid naming mismatch. Code emits data-testid='landing-proof-{id}' (e.g. landing-proof-decision, landing-proof-revenue-gap, landing-proof-next-action). Spec / TEST1 expects 'landing-proof-card-{id}'. Three cards with the correct titles ARE rendered; only the testid prefix is off by '-card'.",
+        "selector": "[data-testid^='landing-proof-card-']",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Invest demo -> dashboard reveal",
+        "issue": "InvestOpener.onContinue (setIntroStage(INTRO.DONE)) appears not to re-render with the dashboard, OR analysis prop becomes null after stage change. Page remains on opener.",
+        "affected_selectors": ["[data-testid='invest-decision-strip']", "[data-testid='strip-decision']", "[data-testid='invest-detail-toggles']"]
+      },
+      {
+        "flow": "Operate demo -> hero reveal",
+        "issue": "OperateOpener continue handler does not unmount opener and mount the rebuilt hero.",
+        "affected_selectors": ["[data-testid='operate-section-hero']", "[data-testid='operate-perf-adr']", "[data-testid='operate-build-plan-cta']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_results_summary": {
+    "TEST1_homepage_proof_cards": {
+      "pass": false,
+      "notes": "3 proof cards render correctly with all expected titles ('Buy / Negotiate / Pass', 'Revenue Gap', 'Next Best Action') but testids are 'landing-proof-decision', 'landing-proof-revenue-gap', 'landing-proof-next-action' (no '-card-' segment). Spec selector '[data-testid^=landing-proof-card-]' returns 0."
+    },
+    "TEST2_invest_minimal_default": {
+      "pass": false,
+      "notes": "BLOCKED by opener->dashboard transition bug. invest-decision-strip never appears after click. All 5 strip-* cards absent. All 10 accordion section testids absent (would be correct IF dashboard mounted, but here they are absent because dashboard itself never mounted). Toggle strip & 4 toggle buttons absent."
+    },
+    "TEST3_toggle_full": {
+      "pass": false,
+      "notes": "BLOCKED - invest-toggle-full button does not exist on page because dashboard never mounts."
+    },
+    "TEST4_strip_values": {
+      "pass": false,
+      "notes": "BLOCKED - strip-* cards do not exist."
+    },
+    "TEST5_operate_hero": {
+      "pass": false,
+      "notes": "BLOCKED by operate opener->hero transition bug. 0/11 of operate-perf-*, operate-opp-*, operate-action-*, operate-build-plan-cta found."
+    },
+    "TEST6_spitogatos_paste": {
+      "pass": true,
+      "notes": "PASS: URL paste navigates to /invest/asset/dft_*, listing-unreadable-screen visible, all 4 recovery paths present (unreadable-path-retry, unreadable-path-paste, unreadable-path-upload, unreadable-path-manual)."
+    },
+    "TEST7_brand": {
+      "pass": true,
+      "notes": "PASS: title='PropOS - The Operating System for Hospitality Assets'. Nav shows 'PropOS.' as visible text. Footer contains PropOS. No VELA or STAYOS in user-visible text. (Note: internal testids still use legacy 'vela-nav', 'vela-footer' but user-visible content is clean.)"
+    }
+  },
+  "test_report_links": [],
+  "action_items": [
+    "CRITICAL: Debug InvestOpener.onContinue / introStage transition. Verify setIntroStage(INTRO.DONE) re-renders InvestDashboard with analysis intact. Suspect: analysis becomes null on re-render, or onContinue is not wired to button. Check /app/frontend/src/pages/invest/InvestDashboard.jsx lines 293-300 and the InvestOpener component itself.",
+    "CRITICAL: Same fix needed for OperateOpener -> Operate hero transition.",
+    "Rename Hero.jsx line 129 data-testid from `landing-proof-${p.id}` to `landing-proof-card-${p.id}` to match spec, OR update test spec to use 'landing-proof-' prefix. Currently a naming mismatch only.",
+    "Internal testids 'vela-nav' and 'vela-footer' still use legacy 'vela-' prefix. Not user-visible so low priority, but consider renaming to 'propos-nav'/'propos-footer' for consistency."
+  ],
+  "critical_code_review_comments": [
+    "InvestDashboard.jsx is 622 lines - exceeds 700-line threshold soon; consider modularizing (already partially done via dashboard/* components).",
+    "Cinematic intro flow (THINKING -> OPENER -> DONE) is brittle: if analysis fails to load or becomes null between stages, the user gets stuck with no fallback UI. Add error boundary or 'Skip intro' escape hatch.",
+    "Backend 401 errors visible in console on every page load (`Failed to load resource: 401`). Not affecting the tested flows but indicates an unauth'd request from frontend that should be handled or removed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "29% (2/7 tests pass)"},
+  "test_credentials": "None required",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Use preview URL https://hospitality-ai-12.preview.emergentagent.com. The intro flow for /invest/asset/demo is: InvestThinking (~30s, 7 phases) -> InvestOpener (button 'OPEN INVESTOR TERMINAL' has testid invest-opener-continue-btn) -> InvestDashboard (decision strip + minimal view). Currently the second transition is broken - clicking invest-opener-continue-btn keeps the opener mounted. Same pattern on /operate after clicking operate-demo-btn -> Continue Analysis -> operate-opener-continue-btn. TEST6 (Spitogatos) and TEST7 (Brand) both pass cleanly. TEST1 fails only due to testid naming - the 3 proof cards & titles are correct.",
+  "rca_of_the_issue": "Root cause for TEST2-5 failures: InvestOpener (and OperateOpener) onContinue prop does not result in the parent re-rendering the dashboard. Either (a) the click handler is not wired to the button at testid invest-opener-continue-btn, (b) onContinue=() => setIntroStage(INTRO.DONE) is called but state update is overridden by useEffect resetting introStage, or (c) analysis becomes null after re-render causing fallback to opener. Reproduction: navigate to /invest/asset/demo, wait for 'OPEN INVESTOR TERMINAL' button, click it, wait 5s - dashboard never mounts. Mitigation: Inspect InvestOpener.jsx button's onClick wiring; verify setIntroStage(INTRO.DONE) is the only thing the handler does and that no useEffect resets it; ensure analysis state remains populated across the stage change."
+}

@@ -1,0 +1,43 @@
+{
+  "summary": "VELA Iter9 — Hospitality Revenue Transformation OS validated end-to-end. Backend 4/4 pytest pass: real Gemini Nano Banana image gen returns data:image/* base64 (>50KB), second identical call cached:true and <1s; /api/visualize returns 3 concepts with full revenue field set; /api/properties/demo returns >=4 yield_opportunities. Frontend 6/6 critical flows pass: Landing split-hero ('Transform hospitality assets.' + uplift strip + ba-before/ba-after + Asset Score™/Annual Uplift floating chips + 3 pillars), Dashboard renders Cycladic Boutique Suite title with Unrealized Revenue Potential block ('This asset is operating at 64% of projected revenue potential.' + +€21,122/year uplift + 5 summary tiles), 4 yield cards each with EXACTLY 3 action pills (visualize_layout, shopping_cart, update_listing) and ZERO approve_apply pills, hero card shows Opportunity Strength™ /100. VisualizeStudio /visualize/demo/0 renders all 3 concept cards (minimal_cycladic, warm_editorial, mediterranean_contemporary) with revenue grid; clamp /visualize/demo/99 also renders 3 cards. Edge nav: clicking yield-1-action-visualize_layout pill navigates to /visualize/demo/1 (no side panel). Workspace /workspace/demo/0/minimal_cycladic renders before/after slider, 4-tile revenue grid, 4 timeline steps, and all 4 action buttons (build/contractor/rewrite/activate) clickable. Image lazy-load: real Gemini-generated images successfully visible on Workspace hero (data: URL) and on first Visualize card; on heavy concurrent first-load some 502s observed in browser console (transient ingress timeouts; placeholder Unsplash fallback shows correctly per spec).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/visualize/image", "issue": "Under heavy concurrent first-load (3 cards × 3 concepts = 9 cold misses), 2-3 calls returned 502 'Image generation failed' before retry succeeded. Root cause: upstream Gemini gen >30s + ingress h2 timeout. Subsequent retries succeed and cache fills. Acceptable per spec ('placeholder fallback acceptable on first load')."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter9.py",
+    "/app/test_reports/pytest/iter9_results.xml"
+  ],
+  "action_items": [
+    "Optional: add short retry-with-backoff in /app/frontend/src/lib/useGeneratedConceptImage.js so that a single 502 doesn't permanently leave a card on placeholder Unsplash. Currently the hook only attempts once per cache miss.",
+    "Optional: extract _VISUAL_PRIMER + _build_image_prompt to /app/backend/prompts/ to keep server.py from growing past 1452 lines (carryover from iter6/7 review)."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1452 lines (was 1145 in iter7) — still no module split. _VISUAL_PRIMER + _build_image_prompt + TRANSFORM_DIRECTIVES + visualize logic all live in one file. Strongly recommend /app/backend/prompts/ extraction.",
+    "/api/visualize/image cache key omits any prompt-content hash — if the same key is called with a different concept body (different mood/atmosphere), the second call returns the cached image even though the prompt would have differed. Low-impact for the 3-fixed-concept demo, but a footgun for arbitrary concepts.",
+    "_IMAGE_CACHE clears entirely on overflow (>=60) — on a high-traffic deploy this throws away ALL warm entries every ~60 unique calls. Consider LRU.",
+    "FastAPI on_event deprecations still present (carryover from iter7) — should migrate to lifespan context manager.",
+    "test_iter6.py still in tree and will fail against current visualize_layout/activate_upgrade shape — should be deleted (flagged in iter7 too).",
+    "useGeneratedConceptImage hook (per filename in spec) has no retry / no error toast — a transient 502 leaves the card on placeholder forever for that session."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter9.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (4/4 pytest)",
+    "frontend": "100% of critical iter9 flows (Landing + Dashboard + VisualizeStudio + clamp + edge nav + Workspace)"
+  },
+  "test_credentials": "n/a — all tested flows are public demo (no auth).",
+  "seed_data_creation": "None. /api/visualize/image cache populated as side effect of test (cache key 'minimal_cycladic|Mykonos|Boutique Suite|Cycladic Boutique Suite').",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter9 introduces real Gemini Nano Banana image gen at POST /api/visualize/image (model gemini-3.1-flash-image-preview via emergentintegrations LlmChat with modalities=['image','text'] + send_message_multimodal_response). Cache is dict by 'concept.key|city|property_type|name'. Frontend hook /app/frontend/src/lib/useGeneratedConceptImage.js lazy-loads with in-memory cache; concept cards in /app/frontend/src/pages/VisualizeStudio.jsx and /app/frontend/src/pages/Workspace.jsx use it. PRIMARY_THREE in /app/frontend/src/lib/transformActions.js is now visualize_layout + shopping_cart + update_listing — approve_apply / contractor_pack / activate_upgrade / export_pack are NOT on yield cards anymore (still callable from Workspace and TransformPanel). Yield card testids: yield-{0..3}, yield-{i}-action-{visualize_layout|shopping_cart|update_listing}. Unrealized Revenue block testids: unrealized-revenue, unrealized-uplift. Real image gen is slow (15-50s cold) and occasionally 502s on heavy concurrent first-load — placeholder Unsplash fallback is acceptable per spec.",
+  "rca of the issue": "n/a — no blocking issues in iter9. Minor 502 on concurrent cold-start image gen is documented and acceptable (graceful Unsplash fallback). Backend log review confirms /api/visualize/image is now consistently 200 OK after warm cache."
+}

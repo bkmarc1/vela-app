@@ -1,0 +1,43 @@
+{
+  "summary": "VELA Iter10 validated end-to-end. Backend 4/5 pytest pass on POST /api/ingest/listing-url: valid Airbnb URL returns Property-shaped JSON with required _provenance keys (name/city/sleeps/bedrooms) ✓; garbage URL falls back to _source='inferred' with name+city populated (no 5xx) ✓; non-http URL returns 400 ✓; demo property regression (asset_score=82 + 4 yield_opportunities) ✓. ONE BUG: when user supplies nightly_rate, returned value matches input (219) but _provenance.nightly_rate='scraped' (AI's own label) instead of required 'user' — spec explicitly requires 'user'. Frontend 100% on Landing repositioning: hero-title 'Hospitality assets are / underperforming.' ✓, hero-sub 'VELA unlocks their unrealized revenue potential.' ✓, category-section with 'WHAT IS VELA' kicker + 'hospitality revenue transformation infrastructure' ✓, first-mover-section with 'first operating system' / 'first AI platform' phrasing ✓, first-mover-0..2 tiles ✓, cta-analyze-bottom + cta-demo-bottom routing correct ✓, all preserved testids (hero-cta-*, hero-uplift-strip, ba-before/after, pillar-0..2) ✓. Frontend 100% on /analyze authenticated e2e (via cookie session): analyze-page renders, analyze-title 'Paste a listing. VELA does the rest.', input-listing-url visible, 4 goal chips (higher_adr/family/luxury/occupancy), extract-btn correctly disabled→enabled when URL typed, ingest-loading appears on click, review step renders all fields (name/city/sleeps/bedrooms/property_type) with prov-{key} chips showing valid label 'ESTIMATED BY VELA' (uppercased via CSS), analyze-btn 'Generate Asset Intelligence' visible. Edge: /analyze unauth → ProtectedRoute shows 'Verifying session…' then redirects to /login ✓.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/ingest/listing-url", "issue": "When request body includes user-supplied nightly_rate AND the AI also returns a nightly_rate in its JSON, server skips the provenance override at server.py:1353 (`if payload.nightly_rate and not parsed.get('nightly_rate')`). Result: returned nightly_rate equals user input by coincidence (because AI was given it as context and echoed back), but _provenance.nightly_rate remains 'scraped' (whatever AI labeled). Spec requires _provenance.nightly_rate='user' whenever user provides it. Fix: change condition to ALWAYS force-override when payload.nightly_rate is set: `if payload.nightly_rate: parsed['nightly_rate'] = payload.nightly_rate; parsed.setdefault('_provenance', {})['nightly_rate'] = 'user'`."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Landing FloatingChip", "issue": "data-testid for 'Asset Score™' chip is computed as 'hero-chip-asset-score-' (trailing dash) due to `replace(/[^a-z]/g, '-')` converting both space and ™. Iter10 spec referenced 'hero-chip-asset-score' without trailing dash. Cosmetic; chip renders correctly. Fix: trim trailing dashes in FloatingChip testid generator.", "selector": "[data-testid='hero-chip-asset-score-']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter10.py",
+    "/app/test_reports/pytest/iter10_results.xml"
+  ],
+  "action_items": [
+    "FIX BACKEND: server.py:1353 — when payload.nightly_rate is provided, always override parsed['nightly_rate'] AND set _provenance.nightly_rate='user', regardless of whether AI returned a value. Currently the user value is silently overshadowed by AI provenance.",
+    "OPTIONAL: Landing.jsx FloatingChip — strip trailing/leading dashes when computing data-testid so 'Asset Score™' becomes 'hero-chip-asset-score' (matching spec) rather than 'hero-chip-asset-score-'."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1621 lines (was 1452 in iter9) — _scrape_listing + _slug_hints + LISTING_INGEST_SYSTEM + ingest endpoint added inline. Splitting into /app/backend/ingest/ module would help; recommendation re-stated from iter6/7/9.",
+    "_scrape_listing uses a synchronous requests.get inside an async route handler — blocks the event loop for up to 8s. Should use httpx.AsyncClient.",
+    "LISTING_INGEST fallback uses city='—' (em dash) when scrape+AI both fail; downstream UI shows literal '—' as City. Consider 'Unknown' or empty + clearer copy.",
+    "ProtectedRoute /analyze auth flow takes >2s on cold load (visible 'Verifying session…' state) — could cache last successful /api/auth/me result in sessionStorage to avoid blocking initial paint."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter10.py (new)"
+  ],
+  "success_rate": {
+    "backend": "80% (4/5 pytest)",
+    "frontend": "100% of critical iter10 flows (Landing repositioning + /analyze authenticated e2e + ProtectedRoute redirect)"
+  },
+  "test_credentials": "Created test session via /app/memory/test_credentials.md mongosh recipe — user_id 'test-user-1778236525414', session_token 'test_session_1778236525414'. Cleaned up after test (db.user_sessions.deleteMany({user_id:/test-user-/})).",
+  "seed_data_creation": "Inserted 1 test user + 1 session in test_database.users + .user_sessions during /analyze e2e; deleted at teardown.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter10 added POST /api/ingest/listing-url at backend/server.py:1190-1356 (hybrid: requests.get scrape → og/json-ld parse → Claude sonnet-4-5 synthesis with LISTING_INGEST_SYSTEM prompt → safe fallback). Frontend /analyze is now URL-first: pages/Analyze.jsx with UrlStep + ReviewStep components. /analyze is auth-gated by ProtectedRoute. Test cookie+session approach: insert into test_database.users + .user_sessions, then add cookie 'session_token' on the preview domain BEFORE first navigation (page.context.add_cookies before page.goto). Auth /api/auth/me accepts both Authorization: Bearer <token> AND Cookie: session_token=<token>. Ingest takes ~6-15s (Claude call). Ingest endpoint NEVER 5xx's by design — only 400 on non-http URL.",
+  "rca of the issue": "Bug: _provenance.nightly_rate='scraped' when user-supplies it. RCA: server.py line 1353 condition `if payload.nightly_rate and not parsed.get('nightly_rate')` only triggers user-provenance override when AI returns null nightly_rate. But the AI is fed 'User-provided ADR: €219' in context (line 1297), so AI obediently echoes 219 back into its output AND tags its own _provenance.nightly_rate='scraped'. Server then trusts AI's provenance verbatim. Reproduction: POST /api/ingest/listing-url {url:'https://www.airbnb.com/rooms/87654321', nightly_rate:219} → response.nightly_rate=219 (correct), response._provenance.nightly_rate='scraped' (wrong; spec requires 'user'). Mitigation: change line 1353 to unconditionally override when payload.nightly_rate truthy: `if payload.nightly_rate: parsed['nightly_rate'] = payload.nightly_rate; parsed.setdefault('_provenance', {})['nightly_rate'] = 'user'`."
+}

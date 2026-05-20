@@ -1,0 +1,36 @@
+{
+  "summary": "Validated PropOS AI fallback parsers (Claude Sonnet 4.5) for the bot-blocked listing flow. All 5 critical backend test cases passed: Koukaki extraction returns the exact expected fields and confidence tags ('user_pasted_text' for populated fields, 'missing' for empty, 'calculated' for price_per_sqm_eur); 'too short' input returns HTTP 400 with the right message; /invest/parse-screenshot returns 400 for empty list ('at least one') and >3 images ('Maximum 3'); the honest-null prompt produced null asking_price/m2/rooms on the fact-less input. Frontend UnreadableListing UI was verified end-to-end on /invest with a Spitogatos URL: listing-unreadable-screen, both unreadable-paste-* and unreadable-upload-* element trees render, the Extract-With-AI submit button is correctly disabled while no screenshot is selected and the paste submit toggles to enabled once text is filled. Regression on /invest/asset/demo confirms the invest-decision-strip renders after clicking invest-opener-continue-btn, and /operate, /dashboard/demo, /portfolio/demo, /reports all load without crash overlays.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_invest_parse.py",
+    "/app/test_reports/pytest/iter51_parse.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Server.py is large (>4300 lines) — consider splitting the invest parser block (_PARSE_SYSTEM_PROMPT, _ai_parse_listing, _build_response_from_ai, parse-text / parse-screenshot endpoints) into a dedicated invest_parser module for maintainability.",
+    "Parse-text prompt + builder correctly enforce honest-null semantics; consider also tagging price_per_sqm_eur 'calculated' only when *both* operands carry the user_* tag — currently the field is 'calculated' even when m2/price are missing IF both are present in parsed; the code already guards for that, no fix required.",
+    "/api/invest/parse-screenshot decodes base64 only if the data: prefix is present — for raw-base64 with embedded whitespace/newlines, Claude should still work, but adding a basic sanity check (e.g. min length) would catch obviously-empty placeholders earlier instead of 502-ing through Claude."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_invest_parse.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "none required — public endpoints",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend test suite for the AI fallback parsers lives at /app/backend/tests/test_invest_parse.py and runs in ~9s (real Claude calls cost ~4-6s each). Frontend Unreadable flow is reached by entering any Spitogatos URL on /invest and clicking Analyze; the UI consistently shows the listing-unreadable-screen after analysis. /invest/asset/demo requires clicking invest-opener-continue-btn (do NOT use force=True — the briefing overlay swallows force-clicks; a regular click after scroll_into_view_if_needed works).",
+  "rca of the issue": "N/A — no bugs found."
+}

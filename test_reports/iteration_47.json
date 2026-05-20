@@ -1,0 +1,29 @@
+{
+  "summary": "Iter47 PropOS rebrand + Dashboard/Portfolio/Invest upgrades verified end-to-end via Playwright on the public preview URL. All 7 review-request features PASS. No regressions in /invest/asset/demo or /invest URL-paste recovery flow.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_47.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Rebrand grep across /app/frontend/src for 'STAYOS|Stayos|VELA|Vela' (excluding intentional internal identifiers vela-invest / vela-operate / EnterVela / WhyVela / vela-nav / vela-footer / mobile-nav-enter-vela) returns zero matches — rebrand is clean in user-visible surfaces.",
+    "DashboardHome.jsx KPI strip is now 5-wide (md:grid-cols-5) with dashboard-kpi-needs-data='Assets Needing Data · 1 · Block full analysis' wired to a brand-honest copy.",
+    "DashboardHome.jsx Market Pulse Source Ledger correctly marks Airbnb/Booking/Spitogatos as USED and AirDNA/PriceLabs/PMS as NOT CONNECTED — no fabricated integrations.",
+    "Portfolio.jsx _computeRow derives movement from opportunity_strength only when has_intelligence; otherwise emits 'Needs Data' — strictly honest. All 5 demo assets correctly render the 'Needs Data' MovementStrip.",
+    "Portfolio.jsx 'portfolio-section-changes' renders only when filtered.length>0 and shows an honest empty state ('No verified changes yet' + 'Tracking activates once a PMS / channel manager is connected').",
+    "InvestLanding.jsx Live Demo section (invest-demo-section / invest-demo-card / invest-demo-badge='DEMO DATA') is below the URL paste card with the Run Demo Analysis CTA navigating to /invest/asset/demo — verified live.",
+    "Footer.jsx outputs '© 2026 PropOS — The AI Operating System for Hospitality Real Estate.' as required.",
+    "index.html <title> = 'PropOS — The Operating System for Hospitality Assets' — matches spec exactly."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (frontend-only)", "frontend": "7/7 PASS (100%)" },
+  "test_credentials": "None — all flows public/demo.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "VERIFIED LIVE on https://hospitality-ai-12.preview.emergentagent.com:\n  (1) Browser tab title = 'PropOS — The Operating System for Hospitality Assets'. Nav logo data-testid='nav-logo' = 'PropOS.'. No VELA/Stayos remnants in body text on /, /dashboard/demo, /portfolio/demo, /invest, /invest/asset/demo.\n  (2) /dashboard/demo: data-testid='dashboard-kpis' contains all 5 KPIs (dashboard-kpi-assets='3', dashboard-kpi-opps='5', dashboard-kpi-gap='€42k', dashboard-kpi-needs-data='Assets Needing Data · 1', dashboard-kpi-reports='4').\n  (3) /dashboard/demo: dashboard-section-watchlist renders 3 cards — dashboard-watch-plaka-3br (decision=NEGOTIATE, €485,000), dashboard-watch-pagrati-loft (decision=BUY, €225,000), dashboard-watch-monastiraki-walkup (decision=NEEDS DATA, €168,000). Each card has an Open Deal button (dashboard-watch-{id}-open).\n  (4) /dashboard/demo: dashboard-section-market-pulse renders market-pulse-signals (STR demand UP / ADR direction STABLE / Occupancy direction UP / Comparable listings STABLE; all labelled Medium) and market-pulse-sources (Airbnb=USED, Booking=USED, Spitogatos=USED, AirDNA=NOT CONNECTED, PriceLabs=NOT CONNECTED, PMS=NOT CONNECTED).\n  (5) /portfolio/demo: 5 portfolio cards rendered (cycladic-boutique-suite, paros-courtyard, mykonos-villa, athens-loft, comporta-cabin). Every card has portfolio-card-{id}-movement strip; all 5 demo properties (no intelligence) correctly display 'NEEDS DATA' label. portfolio-section-changes renders title 'Portfolio Changes', subtitle 'Verified asset movement only — PropOS never invents trends.', empty state 'NO VERIFIED CHANGES YET' + 'Tracking activates once a PMS / channel manager is connected'.\n  (6) /invest: invest-demo-section + invest-demo-card present. invest-demo-badge='DEMO DATA'. Card content verified: 'Koukaki 3BR STR Apartment', '€485,000', '92 m²', '3', '2', 'Koukaki', 'Demo listing'. invest-demo-run-btn navigates to /invest/asset/demo (verified live).\n  (7) /invest URL paste with Spitogatos URL navigates to /invest/asset/dft_xxxxxxxx and renders data-testid='listing-unreadable-screen' with all 4 recovery paths (Retry extraction / Paste listing text / Upload screenshots / Enter manually) — no regression.\n  Footer = 'PropOS | AI Operating System for Hospitality Real Estate — Asset module. | © 2026 PropOS — The AI Operating System for Hospitality Real Estate.'\n  Console errors observed: only HTTP 401s on /api/auth/me (expected — no user logged in for public demo flows). No other errors.",
+  "rca of the issue": "N/A — no production bugs found. Rebrand and feature additions are wired correctly per spec; no fabricated metrics surface anywhere; honest empty/'Needs Data' states fire where expected."
+}

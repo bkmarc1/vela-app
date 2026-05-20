@@ -1,0 +1,45 @@
+{
+  "summary": "Iter15 — VELA moat-building intelligence layer fully validated. All 4 NEW dashboard sections (hospitality-archetype, benchmark-position, conversion-intelligence, operational-friction) render deterministically with no async loading. Section ordering on /dashboard/demo verified by bounding-box: dashboard-page → hospitality-archetype → benchmark-position → market-intelligence → unrealized-revenue → conversion-intelligence + operational-friction (side-by-side at same y-coord 2029px) → score-breakdown → chart-card. hospitality-archetype contains both 'Currently:' and 'Potential:' labels with archetype text. benchmark-position renders all 7 expected rows: benchmark-{adr,occupancy_pct,asset_score,photo_count,sleeps,review_score,response_rate} each with percentile bar + top-10% marker. conversion-intelligence shows 3 ConvTiles (Clickability/Warmth/Luxury Signal) + 4 insight-snippet flags. operational-friction lists 4 items with friction-{high,medium,low} severity tags (1 high, 2 medium, 1 low). Enhanced YieldHeroCard (auto-selected by sort, demo's hero is yield-3 = Editorial Photography Refresh, opportunity-strength 95) exposes yield-3-benchmark snippet, yield-3-psychology paragraph, 4-tile micro-grid (Revenue Impact / Payback / Cost / Complexity) + 'Why Top Performers Use It' kicker — all visible. Workspace /workspace/demo/0/family_premium: NEW execution-realism block visible with 4 tiles (Difficulty 'Medium · 1 contractor' / Timeline '4 weeks' / Contractor 'Joiner + electrician' / Operational Disruption '5–7 day downtime'). All earlier workspace testids still present (workspace-hero, before-after-slider, workspace-revenue, workspace-insights, workspace-timeline, ws-build-upgrade, ws-rewrite-listing, ws-activate-upgrade). Regression: /, /portfolio/demo, /visualize/demo/0 (3 NEW concept keys present), /upgrade/demo/0, /listing/demo/0 all render their primary testids. Backend regression 5/7 pytest pass on first run (2 intermittent 502s from cloudflare ingress on /api/upgrade/cart and /api/upgrade/listing — backend logs show all 200 OK throughout, confirming infra-level cold-start, not a backend regression). Action-pill rules verified per title (testid uses source-array indexOf, NOT sort-by-strength order): yield-0 Sleep=default(viz+cart+update_listing) ✓, yield-1 Lighting=lighting_package+viz+cart ✓, yield-2 Outdoor=outdoor_package+viz+cart ✓, yield-3 Editorial=update_listing+visualize_layout (NO cart) ✓. The action-pill behavior described in review_request is correct in code — review_request just enumerated indices in sort-by-strength order rather than source-array order.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/upgrade/cart and /api/upgrade/listing", "issue": "Intermittent 502 from cloudflare ingress on cold paths during pytest run (~30% of attempts). Backend logs show 200 OK consistently — confirmed infra-level cold-start, retries succeed."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter15_regression.py",
+    "/app/test_reports/pytest/iter15_results.xml",
+    "/app/test_reports/pytest/iter15_results_b.xml"
+  ],
+  "action_items": [
+    "INFO: review_request enumerates yield-0/yield-1/yield-2/yield-3 in sort-by-strength order, but Dashboard.jsx assigns testids by source-array indexOf — actual mapping is yield-0=Sleep, yield-1=Lighting, yield-2=Outdoor, yield-3=Editorial. All four action-pill rules correctly applied per title; nothing to fix. Update spec doc to disambiguate index-by-strength vs index-by-source-array if needed.",
+    "INFO: hero card position is determined by .sort((a,b)=>strength_b - strength_a)[0] with testid kept as source-array index (line 269-271 Dashboard.jsx). Hero rendered = yield-3 Editorial in DEMO_PROPERTY. yield-3-benchmark + yield-3-psychology + 'Why Top Performers Use It' + 4-tile micro-grid all present.",
+    "LOW: 502s observed on /api/upgrade/cart and /api/upgrade/listing during pytest are cloudflare/ingress cold-starts — backend logs confirm 200 OK. Consider adding application-level keepalive ping or warmup hook if user-facing flakiness is reported."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard.jsx is now ~1023 lines — 4 inline subcomponents added (HospitalityArchetype, MarketBenchmarkPosition, ConversionIntelligence, OperationalFriction) plus BenchmarkRow, ConvTile. Previously flagged at 790 lines in iter13; now well past the 700-line threshold. Strongly recommend extracting /components/dashboard/{HospitalityArchetype,MarketBenchmarkPosition,ConversionIntelligence,OperationalFriction,YieldHeroCard,YieldCard}.jsx",
+    "benchmarks.js percentile math could overstate the read for asset_score=82 vs top10=88 — currently lands at P~88 which is correct, but the linear interpolation between median/top10 makes the bar non-monotonic with respect to standard normal — acceptable for marketing visualization, but document the heuristic in a comment.",
+    "recommendationIntelligence.js _LIB only covers 5 hard-coded rec titles + a regex fuzzy match — when /api/analyze returns a novel rec title with neither match, intelForRec returns the empty-shape default. This is graceful but the dashboard then renders an empty 4-tile micro-grid with '—'. Consider returning a generic fallback intel that still has guest_psychology + benchmark_insight for unknown titles.",
+    "review_request specified data-testid='market-intelligence' (added in iter14 fix) — verified present in this iter. Iter13 finding is resolved.",
+    "Workspace.jsx execution-realism rules use 3 hardcoded helper functions (_difficultyForConcept/_contractorForConcept/_disruptionForConcept) — fine for current 3 concept keys but will silently degrade to the default branch for any future concept key. Consider centralizing in a CONCEPT_REALISM map.",
+    "console 401s on /api/auth/me on every demo route load — re-stated from iter13. Public demo routes should skip the auth probe to avoid console noise."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter15_regression.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% on backend logs (server-side 200 OK throughout). 71% (5/7) at ingress on first run; 71% (2nd cart/listing) flapped 502→200 on retry. test_iter15_regression.py landed 5/7 with 2 ingress-level 502 flakes and 0 server-side issues.",
+    "frontend": "100% on all enumerated review_request checks (35/35): all 4 NEW moat sections render with correct testids, ordering matches spec, archetype text correct, all 7 benchmark rows with percentile + top-10 marker, conv-intel 3 tiles + 4 flags, friction 4 items with severities, hero-card has benchmark+psychology+kicker+micro-grid, workspace execution-realism 4 tiles correct, regression routes all load."
+  },
+  "test_credentials": "Not needed — all routes tested are public demo routes.",
+  "seed_data_creation": "None — DEMO_PROPERTY + new benchmark/intelligence libraries are all deterministic JS computation, no seed needed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter15 validates the moat-building intelligence layer. New libs: benchmarks.js (computeBenchmarkRows/computeHospitalityArchetype/computeConversionRead/computeOperationalFriction) and recommendationIntelligence.js (intelForRec). All deterministic JS — render instantly with no LLM call. Dashboard section order LOCKED: dashboard-page → hospitality-archetype → benchmark-position → market-intelligence → unrealized-revenue → (conversion-intelligence + operational-friction side-by-side at md:grid-cols-2) → primary-opportunities (yield-N) → score-breakdown → chart-card. CRITICAL ordering note: yield-N testids use source-array indexOf, NOT sort-by-strength — in DEMO_PROPERTY: yield-0=Sleep, yield-1=Lighting, yield-2=Outdoor, yield-3=Editorial. The hero card (visually first) is the highest-strength rec which lands at yield-3 in DEMO. Backend NOT changed in this iter — only frontend gained the libraries. /api/upgrade/cart and /api/upgrade/listing showed 502 flapping at the cloudflare ingress on first request after idle period; backend logs confirm 200 OK — retry once on cold-start. Workspace execution-realism: tile values come from _difficultyForConcept/_contractorForConcept/_disruptionForConcept helpers in Workspace.jsx (only 3 keys handled — family_premium / romantic_escape / default).",
+  "rca of the issue": "No bugs. Two notes: (1) intermittent 502 from cloudflare ingress on /api/upgrade/cart and /api/upgrade/listing during pytest — confirmed via backend logs to be infra-only (server returns 200 OK throughout). Mitigation: keepalive ping or app-level warmup. (2) review_request expected action pills mapped per yield-0..yield-3 indices to be sort-by-strength but the actual code uses source-array indexOf — all 4 rules ARE correct per title, just associated with different numeric indices. No code change needed; spec wording could be clarified."
+}

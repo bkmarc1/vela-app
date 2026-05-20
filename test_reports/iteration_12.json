@@ -1,0 +1,48 @@
+{
+  "summary": "VELA Iter12 NEW Listing Rewrite validated end-to-end. Backend 9/9 pytest pass on POST /api/upgrade/listing — returns required schema {title, subhead, description[3], amenities (>=5), sleeps_positioning, guest_segment, pricing_positioning, house_rules}; description is exactly array of 3 strings; amenities are 5+ tag strings; no exclamation marks anywhere in copy; cache hit on identical 2nd call <2s and same payload; minimal/empty recommendation+property still returns 200 with valid fallback schema; empty body returns 422 (Pydantic). Frontend /listing/demo/0 (public): listing-page renders, listing-loading-stages animates, listing-compare with current-panel + vela-panel both visible. listing-title='Sleep Capacity Expansion'. current-panel shows current-title/current-subhead/current-description/current-amenities with generic tags ('WiFi','Air conditioning','Kitchen','TV'). vela-panel shows vela-title/vela-subhead/vela-description/vela-amenities/vela-sleeps/vela-pricing/vela-segment + per-block copy buttons (vela-title-copy, vela-subhead-copy, vela-description-copy, vela-amenities-copy). Click vela-title-copy triggers 'Copied to clipboard' toast. approve-listing-btn shows 'Listing rewrite approved · sync queued' toast. copy-all-btn triggers copy + toast. Edge clamp /listing/demo/99 renders first upgrade with both panels (title=Sleep Capacity Expansion). Regression: dashboard yield-0-action-update_listing → /listing/demo/0; yield-1-action-update_listing → /listing/demo/1 (no side panel); yield-0-action-shopping_cart still → /upgrade/demo/0; workspace ws-rewrite-listing (after concept selected, /workspace/demo/0/cycladic) → /listing/demo/0. Note: visualize_layout pill not present on yield-0 or yield-1 of demo property (likely tied to specific yield types only) — could not regress that exact selector but Iter11 already validated visualize_layout flow on a different yield index.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ListingRewrite.copy()",
+        "issue": "navigator.clipboard.writeText is not awaited and not wrapped in try/catch. In environments where clipboard write is denied (headless test browsers, http preview frames, restricted iframes), the unhandled promise rejection bubbles up and triggers React's dev error overlay ('Failed to execute writeText on Clipboard: Write permission denied'). Toast still fires so end-user UX is fine in production browsers, but the overlay is visible during testing and could appear in restricted browser contexts.",
+        "selector": "[data-testid=\"vela-title-copy\"], copy-all-btn",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter12_listing.py",
+    "/app/test_reports/pytest/iter12_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL/LOW: Wrap navigator.clipboard.writeText in try/catch (or .catch()) in ListingRewrite.jsx::copy() to prevent unhandled rejection / dev error overlay when clipboard permission is denied. e.g. `try { await navigator.clipboard?.writeText(text); } catch {}`. Toast already fires correctly so functionality is fine; this is purely error-overlay hygiene.",
+    "INFO: visualize_layout action pill was not present on demo yield-0 or yield-1 in current dashboard render — Iter11 already validated /visualize/demo/N nav so this is non-blocking, but worth confirming demo property yield_opportunities still surface a visualize_layout pill if that regression is critical."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now ~1926 lines — listing endpoint adds ~120 more lines inline. Split inference endpoints (/upgrade/listing, /upgrade/cart, /upgrade/visualize, /upgrade/concept) into /app/backend/inference/ submodule. Re-stated from iter10/11.",
+    "_LISTING_CACHE is in-process Dict — same caveat as _CART_CACHE: lost on backend restart / not shared across pods. Consider Mongo TTL collection or Redis for production.",
+    "ListingRewrite.jsx 'current' panel hardcodes generic amenities ['WiFi','Air conditioning','Kitchen','TV','Iron','Hairdryer'] regardless of the real property — labelled 'as-listed' in UI but if the real property had its own amenity list this would mislead. Acceptable for demo, but production scrape integration should populate this from actual listing scrape.",
+    "Description on 'current' is hardcoded fallback strings 'Description not curated for design-led positioning. Generic amenity-led copy.' — same caveat: only honest when there's no real scrape. Add a clear data-testid='current-source' badge ('synthetic placeholder' vs 'live scrape') so users understand provenance.",
+    "ListingRewrite.copy() does not handle clipboard rejection → dev overlay surfaces on restricted browsers. See frontend_issues.",
+    "Side / Block / MicroBlock components are local helpers but inline at 287 LOC — fine for now, but if this page grows, consider extracting to /components/listing/."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter12_listing.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 pytest)",
+    "frontend": "100% (15/15 listing-rewrite UI checks + 4/5 regression nav tests; 1 regression skipped because visualize_layout pill not on demo yield-0/1)"
+  },
+  "test_credentials": "Not needed — /listing/demo/* and /dashboard/demo and /workspace/demo/*/* are all public.",
+  "seed_data_creation": "None — all tests use demo property + public routes.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter12 added POST /api/upgrade/listing at server.py:1370-1490 (Claude sonnet-4-5, LISTING_REWRITE_SYSTEM, _LISTING_CACHE keyed by 'v1|rec.title|prop.property_type|prop.city|concept.key', _listing_fallback always available). Frontend new page pages/ListingRewrite.jsx — two-column current vs vela compare, per-block copy buttons, toast-only Approve & Sync + Copy entire. Routes in App.js: /listing/demo/:upgradeIdx (public) and /listing/:propertyId/:upgradeIdx (auth). Dashboard handleAction now navigates for update_listing (Dashboard.jsx:103-105). Workspace ws-rewrite-listing button navigates (Workspace.jsx:295). Backend cold call ~10-15s, warm cache <100ms. Approve & Sync + Copy entire are MOCKED (toast-only — confirmed in review_request.mocked_api). Workspace requires conceptKey URL param: /workspace/demo/:upgradeIdx/:conceptKey — naked /workspace/demo/0 gives blank. Demo property has yield_opportunities[0] = 'Sleep Capacity Expansion'.",
+  "rca of the issue": "Single low-priority finding: ListingRewrite.jsx::copy() invokes navigator.clipboard?.writeText(text) without await/.catch. When writeText rejects (denied permission, e.g., headless test browsers), the promise rejection escapes and reaches React's overlay (development build) or window.unhandledrejection (production). Mitigation: change to `navigator.clipboard?.writeText(text).catch(()=>{})` or wrap in try/await. Toast fires synchronously after the call so user feedback is unaffected — purely a console/overlay hygiene issue."
+}

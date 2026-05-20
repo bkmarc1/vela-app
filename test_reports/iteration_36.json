@@ -1,0 +1,28 @@
+{
+  "summary": "Frontend acceptance testing for VELA WWVD execution layer + brand reposition (iter36). All critical features verified on desktop and mobile: Landing copy, OPERATE WWVD panel (3 cards, 8 tabs, sections), INVEST WWVD panel (3 cards, 8 tabs, sections), tab scroll-spy working, CTAs navigate correctly. 0 functional bugs found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "(Optional / nit) Spec said primary INVEST WWVD CTA should route to /invest/memo/demo for BUY/NEGOTIATE/PASS verdicts, but wwvdEngine.js routes PASS verdict to '/invest' with cta_label 'Walk Away'. This appears intentional (Walk-Away semantics make sense for PASS) but contradicts the literal spec language. Confirm with product whether PASS should also generate a memo or remain as Walk-Away."
+  ],
+  "critical_code_review_comments": [
+    "wwvdEngine.js: deterministic, well-structured, sort-by-score top-3 slice — clean.",
+    "InvestTabsBar.jsx and OperateTabsBar.jsx duplicate ~80% of code (TABS array + IntersectionObserver scroll-spy + scroll handler). Consider extracting a generic <ScrollSpyTabsBar tabs={...} theme={...}/> hook/component to remove duplication.",
+    "WWVDPanel.jsx (invest) and WWVDPanel.jsx (operate) also duplicate structure heavily — only colors/data-testid prefix differ. Could be unified with a `theme` prop.",
+    "Console emits multiple 401 errors on every page (auth probe to a protected endpoint). Pre-existing — not from this iteration — but worth wrapping the probe in try/catch and silencing the console output.",
+    "InvestTabsBar testids 'invest-tab-risk-flags' is mapped to section id 'invest-section-negotiation', and 'invest-tab-exit-strategy' is mapped to 'invest-section-max-buy'. The label-to-section mapping is opinionated (label != section id). Acceptable but document this for future maintainers."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "Demo routes used — no auth needed.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 22 features in the iter36 review_request were verified via Playwright. Validated: (a) Landing hero kicker 'The AI Operating System for Hospitality Real Estate' (rendered uppercase via CSS), headline 'Most platforms stop at analysis. VELA tells you what to do next.', TwoSystems heading 'Two Intelligence Engines. One Operating System.', Footer copyright contains new tagline. (b) /operate: Verdict block renders, WWVD panel renders 3 cards with label/reason/impact/CTA/confidence, all 8 tabs present (overview/actions/snapshot/revenue/listing/redesign/yield-plan/action-plan), all 6 sections (snapshot/revenue/listing/redesign/yield/action) render, CTA-0 navigates to /listing/demo/0. (c) /invest/asset/demo: Verdict (PASS for demo), WWVD 3 cards (PASS / RAISE ADR THROUGH REDESIGN / TARGET DIGITAL NOMADS), all 8 tabs present, sections roi/comps/transformation/negotiation/max-buy/offer/final-verdict render, Actions tab scrolls page from y=0 → y=831. (d) /invest/asset/manual loads with 5 inputs (EditInputsPanel). (e) Mobile (390px): both INVEST and OPERATE WWVD render 3 cards (no broken layout). (f) 0 page errors / 0 functional console errors (only 8x pre-existing 401 from unauthenticated /api/me probe — not iter36 regression). Backend was not tested per request scope.",
+  "rca of the issue": "No functional issues detected — feature ship is clean."
+}

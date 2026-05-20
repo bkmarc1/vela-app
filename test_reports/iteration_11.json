@@ -1,0 +1,37 @@
+{
+  "summary": "VELA Iter11 Procurement Cart validated end-to-end. Backend 7/7 pytest pass on POST /api/upgrade/cart: returns exactly 3 packages (budget/premium/luxury) each with >=6 items containing required schema (category/name/brand/supplier/dimensions/qty/unit_price_eur/line_total_eur/alternatives); subtotal_eur exactly equals sum(line_total_eur); line_total_eur=qty*unit_price_eur; cache hit returns <2s on 2nd call; minimal/empty payload still returns 200 with 3 packages (fallback path renders, never errors). Frontend 17/17 critical UI flows pass on /upgrade/demo/0: cart-loading-stages shows then cart-layout renders with cart-title='Sleep Capacity Expansion', cart-tier-toggle visible with all 3 tier buttons, default tier=premium correctly highlighted, cart-subtotal=€10,940 + cart-grand-total=€14,004 (matches subtotal*1.28 within rounding tolerance), tier swap budget→€8,554 (lower) / luxury→€21,697 (higher), qty-0-inc 1→2 and grand €14,004→€16,820, alts-toggle-0 reveals alts panel, alt-0-0 swap drops grand and shows 'alt' marker on item, remove-1 removes line and decreases grand, approve-cart-btn shows 'Cart approved · supplier briefs queued' toast. Edge clamp /upgrade/demo/99 renders first upgrade with all 3 tier buttons. Regression: dashboard yield-0-action-shopping_cart navigates to /upgrade/demo/0 (NOT side panel); yield-1-action-visualize_layout still navigates to /visualize/demo/1; workspace ws-build-upgrade navigates to /upgrade/demo/0 (NOT side panel).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter11_cart.py",
+    "/app/test_reports/pytest/iter11_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now ~1800 lines — CART_SYSTEM_PROMPT + _cart_fallback + _CART_CACHE + upgrade_cart endpoint added inline. Splitting into /app/backend/cart/ module is recommended (re-stated from iter10).",
+    "_cart_fallback in server.py and FALLBACK_CART/_BASE_ITEMS/_scalePackage in frontend/src/lib/demoProperty.js duplicate the same scaling logic (0.55 / 1.0 / 1.55 factors, identical alt labels). Consider sourcing from a single shared JSON or keeping only one (since FE FALLBACK_CART is only used on FE network error, BE will already always return a fallback cart).",
+    "/api/upgrade/cart cold call takes 30-50s on first request (Claude sonnet-4-5). The _CART_CACHE is in-process only — restarting backend or scaling pods drops cache. Consider Redis or Mongo TTL persistence for production.",
+    "On UpgradeCart.jsx alternative swap: the alt's name field becomes the displayed item name (e.g., 'Trade alt' from fallback). Fallback alts in server.py (_cart_fallback) use generic alt_label='Local equivalent'/'Trade alt'/'Bespoke commission' as the alt NAME — this looks placeholder-ish in UI (screenshot shows 'Trade alt ALT' as item title after swap). Real AI cart alternatives have proper brand product names so this is only cosmetic on fallback.",
+    "Console showed 3× 502 errors during /upgrade/demo/0 first paint (likely transient ingress while Claude was warming up); cart still rendered correctly via cache after retry — non-blocking but noisy."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter11_cart.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (7/7 pytest)",
+    "frontend": "100% (17/17 cart UI checks + 3/3 regression nav tests)"
+  },
+  "test_credentials": "Not needed — /upgrade/demo/* and /dashboard/demo and /workspace/demo/* are all public.",
+  "seed_data_creation": "None — all tests use demo property + public routes.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter11 added POST /api/upgrade/cart at backend/server.py:1310-1364 (Claude sonnet-4-5 with CART_SYSTEM_PROMPT, _CART_CACHE keyed by lower(title|property_type|city), _cart_fallback always available). Frontend new page pages/UpgradeCart.jsx with TIERS=['budget','premium','luxury'], default tier='premium', overrides dict per tier per item index ({qty?, alt_idx?, removed?}), grand_total=subtotal+round(subtotal*0.04)+round(subtotal*0.24). New routes in App.js: /upgrade/demo/:upgradeIdx (public) and /upgrade/:propertyId/:upgradeIdx (auth). Dashboard handleAction now navigates instead of opening side panel for both shopping_cart and visualize_layout actions (lines 92-102). Workspace ws-build-upgrade button navigates instead of opening side panel (line 281). Cold cart call ~30-50s; warm cache <100ms. To run regression tests against fresh deploy you must prime the cache first (any single call with the demo payload) before running pytest, otherwise the 90s timeout may be exceeded by network/proxy overhead — or bump the timeout.",
+  "rca of the issue": "No bugs found in iter11 surface."
+}

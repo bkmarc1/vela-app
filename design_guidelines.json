@@ -1,0 +1,105 @@
+{
+  "theme": "LIGHT",
+  "archetype": "Archetype 4 (Swiss & High-Contrast)",
+  "color_system": {
+    "description": "Modern SaaS (Linear/Vercel energy). Replaces the warm parchment for stark, high-contrast zincs and one electric accent. Light shell only.",
+    "tokens": {
+      "--vela-bg-page": "#FAFAFA",
+      "--vela-bg-card": "#FFFFFF",
+      "--vela-bg-card-hover": "#F4F4F5",
+      "--vela-text-primary": "#09090B",
+      "--vela-text-secondary": "#52525B",
+      "--vela-text-tertiary": "#A1A1AA",
+      "--vela-border": "#E4E4E7",
+      "--vela-accent-main": "#0F52FF",
+      "--vela-accent-hover": "#003BCC",
+      "--vela-accent-muted": "#E6EDFF",
+      "--vela-status-success": "#10B981",
+      "--vela-status-warning": "#F59E0B"
+    }
+  },
+  "typography": {
+    "stack": "Geist (Headings/Body) + Geist Mono (Kickers/Data). Replaces Inter/Manrope stack for a crisp, startup-friendly feel.",
+    "canonical_scale": {
+      "H1": {
+        "size": "clamp(40px, 5vw, 64px)",
+        "lineHeight": "1.1",
+        "letterSpacing": "-0.04em",
+        "fontWeight": "600",
+        "usage": "Hero titles, massive page headers"
+      },
+      "H2": {
+        "size": "clamp(32px, 4vw, 48px)",
+        "lineHeight": "1.2",
+        "letterSpacing": "-0.03em",
+        "fontWeight": "500",
+        "usage": "Section titles"
+      },
+      "H3": {
+        "size": "clamp(24px, 3vw, 32px)",
+        "lineHeight": "1.3",
+        "letterSpacing": "-0.02em",
+        "fontWeight": "500",
+        "usage": "Card titles, widgets"
+      },
+      "Body": {
+        "size": "16px",
+        "lineHeight": "1.6",
+        "letterSpacing": "0em",
+        "fontWeight": "400",
+        "usage": "Standard paragraphs, descriptions"
+      },
+      "Small": {
+        "size": "14px",
+        "lineHeight": "1.5",
+        "letterSpacing": "0em",
+        "fontWeight": "400",
+        "usage": "Secondary text, metadata"
+      },
+      "Kicker": {
+        "size": "12px",
+        "lineHeight": "1",
+        "letterSpacing": "0.2em",
+        "fontWeight": "500",
+        "textTransform": "uppercase",
+        "usage": "Eyebrows, tags, overlines"
+      }
+    }
+  },
+  "portfolio_blueprint": {
+    "description": "Stripped back, minimal, breathable layout replacing the dense KPI strips.",
+    "header": "Massive typographic statement. H2 for 'Portfolio Value' with a large elegant number and a simple green pill next to it for +YTD growth.",
+    "cards_to_drop": [
+      "3 highlight tiles (too much cognitive load)"
+    ],
+    "cards_to_keep": [
+      "Aggregate Position card (redesigned as minimal inline bento row)",
+      "User-owned asset cards"
+    ],
+    "layout": "Grid with massive negative space (gap-8 or gap-12). Assets move to wide tabular 'List View' or ultra-clean cards (large image, bold title, 2 metrics: Value, Cap Rate).",
+    "hover_motion": "Minimal lift. Card's 1px border changes to --vela-accent-main over 0.15s ease-in-out. No heavy drop shadows."
+  },
+  "market_trends_pattern": {
+    "interval": "Poll every 30 seconds.",
+    "indicator_placement": "Top right of the section header.",
+    "indicator_design": "Subtle, pulsing 6px dot (--vela-status-success) next to a Geist Mono timestamp: 'LIVE · updated 12s ago'.",
+    "manual_refresh": "Minimalist icon-only button (lucide-react RotateCw) beside the timestamp, spins on click.",
+    "motion": "New headlines slide down gracefully (framer-motion initial={{height:0, opacity:0}}). Subtle background flash (--vela-accent-muted to white over 1.5s) to draw the eye gently."
+  },
+  "two_paths_copy": {
+    "left_path": {
+      "kicker": "ASSET ACQUISITION",
+      "title": "Identify high-yield opportunities.",
+      "supporting": "AI-driven market screening and deterministic financial modeling to validate your next move."
+    },
+    "right_path": {
+      "kicker": "ASSET OPTIMIZATION",
+      "title": "Maximize existing portfolio value.",
+      "supporting": "Uncover hidden operational inefficiencies and reposition assets with data-backed market signals."
+    }
+  },
+  "general_guidelines": {
+    "spacing": "Generous. Use Tailwind p-8, p-12. Avoid centered-card-grids-with-equal-spacing, favor asymmetry.",
+    "testing": "All interactive/key elements MUST use data-testid attributes."
+  }
+}

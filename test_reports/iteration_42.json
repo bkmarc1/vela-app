@@ -1,0 +1,29 @@
+{
+  "summary": "Frontend-only validation of iter42's 4 user-flagged fixes. ALL 4 critical fixes work as specified: (1) ENTER VELA picker page at /enter renders with 4 tiles + nav button now routes there (not /invest); (2) Portfolio /portfolio/demo is a full IBKR-style trading terminal — top tape (Assets 5 · AGGR REV €382k · UPLIFT +€57k +15% · W-AVG VELA 81/100 · MARKET OPEN), 5 asset rows with tickers (ATHE/MYKO/COMP/CYCL/PARO), sortable columns, 4 filter tabs (all/opportunity/top/leakage all functional — leakage filters from 5→1, top from 5→3), watchlist (5 entries), Live Signals (5 entries), row selection shows detail strip with Optimize/Open Position CTAs; (3) OPERATE Top 3 insights are now ASSET-SPECIFIC — verified text: 'Photo set thin (1 shots) — top-decile listings carry 16+ photos' · 'Revenue leaking 34% of potential — material recovery available' · 'Urban studio/1BR — digital-nomad mid-term segment under-targeted'. No generic boilerplate. Hospitality DNA shows 'Digital Nomad Hub' for the Athens/Apartment/1BR demo; (4) Autopilot modal — clicking operate-autopilot-master-btn OPENS autopilot-modal (NOT redirect to /upgrade), 7 streams (furniture/contractor/listing/brand/procurement/pricing/automation) all present and sequence to ✓ Complete, autopilot-result block fades in with summary (+€15k uplift · €20k budget · +8 VELA lift), download-plan + view-cart CTAs visible, close button dismisses. Regression: /invest/asset/demo cinematic + hero+PASS verdict + 'Find Better Deals' CTA OK. /invest/asset/manual loads (99 testids). Backend regression /api/portfolio/demo & /api/properties/demo return 200.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "OperateOpener", "issue": "DNA category text renders correctly ('Digital Nomad Hub') but lacks the spec'd data-testid='operate-opener-dna-category' wrapper — testid only exists on /invest opener. Selector-based automation will fail to locate it.", "selector": "div containing analysis.hospitality_dna.category (OperateOpener.jsx:108)", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Add data-testid='operate-opener-dna-category' attribute to the DNA category div in /app/frontend/src/components/operate/OperateOpener.jsx (around line 105-109) for consistency with invest opener and to match the review_request test spec.",
+    "Consider lowering Portfolio opportunity filter threshold (or seeding demo assets with varied opportunity_strength) — currently all 5 demo assets pass the ≥65 threshold so the opportunity filter is visually a no-op (5/5)."
+  ],
+  "critical_code_review_comments": [
+    "AutopilotModal close handler — verify clicks outside dismiss only after streams complete (review spec says 'clicks outside dismiss only after finish'); testing only validated the explicit close-X path.",
+    "Portfolio.jsx ticker derivation (4-char uppercase from name) — works for demo names but could produce collisions on real listings; consider hashing id for uniqueness.",
+    "OperateOpener phase ramp (1.1s/2.4s/3.6s) makes the Continue button non-interactive for 3.6s after mount due to pointer-events-none. Worked but caused a flaky-feel during testing; consider exposing data-ready='true' like /invest opener for deterministic automation."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (2/2 demo endpoints)", "frontend": "97% (32/33 — only the missing operate dna-category testid failed)"},
+  "test_credentials": "n/a — demo routes are public",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "iter42 fixes (4) all verified working. ENTER picker at /enter (tiles: invest/operate/dashboard/portfolio), nav-enter-vela-btn → /enter, Portfolio IBKR terminal with tape+rows+filters+watchlist+signals, Operate insights asset-specific (mentions photo count, revenue leak %, 1BR digital-nomad), Autopilot modal with 7 streams + completion + download. Only minor gap: data-testid='operate-opener-dna-category' missing on OperateOpener.jsx (line 108). Operate cinematic timing: must wait ~4.5s after operate-opener-continue-btn appears before clicking — pointer-events-none until phase='ready' at +3.6s. Modal sequence ~5-6s total before autopilot-result appears.",
+  "rca of the issue": "Single missing testid: the OperateOpener DNA category div at /app/frontend/src/components/operate/OperateOpener.jsx line 108 lacks data-testid='operate-opener-dna-category'. The text content renders correctly ('Digital Nomad Hub') — only the testid attribute is missing. Fix: add data-testid='operate-opener-dna-category' to the wrapping div on line 104-109. One-line fix."
+}

@@ -1,0 +1,34 @@
+{
+  "summary": "Iter28 e2e validation — Major UX restructure (Landing + Nav minimalism). ALL 13 spec items pass. Backend regression 22/22 PASS (test_iter25_invest.py + test_iter24_stripe_warmup.py). Frontend: 7-section landing renders in correct vertical order (landing-hero → landing-what-is → landing-transformation → landing-offer → landing-differentiators → landing-portfolio-preview → landing-final). Hero shows kicker 'VELA · INTELLIGENCE ENGINE', H1 contains 'AI Operating System' + 'Hospitality Investments', subtitle present, 2 CTAs (Analyze Property → /invest, Optimize Asset → /dashboard/demo). Section 2 Two Systems: 'Architecture' kicker, H2 'Two Intelligence Systems. One Platform.', both engine blocks have correct subtitles (Acquisition Intelligence / Asset Intelligence) and exactly 4 bullets each. Section 3 Value Flow: 6 steps Property→AI Analysis→Transformation→Higher ADR→Higher Occupancy→Stronger Net Yield, before/after frame with ADR €180·67% / ADR €245·84%. Section 4 Offer Table: 4 rows (€128k/14.1%, €137k/11.8% with BEST badge, €149k/9.4%, €165k/6.9%), single statement sentence, NO long paragraphs. Section 5 Why VELA: exactly 6 cards with correct slugs (acquisition-intelligence, asset-intelligence, tax-aware-roi, hospitality-positioning, market-signals, transformation-intelligence), 1 sentence each. Section 6 Portfolio Preview: kicker 'INSTITUTIONAL READ', 4 tiles (3 / 9.8% / €48k/yr / –8.4%), CTA → /portfolio/demo. Section 7 Final: H2 contains 'Hospitality Alpha' + 'Through Intelligence', single Enter VELA CTA → /invest. Nav: exactly 5 direct links (nav-vela-invest, nav-vela-operate, nav-portfolio, nav-dashboard, nav-pricing) with correct hrefs, plus nav-enter-vela-btn (→ /invest) and nav-login-btn (unauth). nav-mode-switch CONFIRMED REMOVED. Position: sticky. Logo left, links centered, CTA right. No regression on /dashboard/demo, /portfolio/demo, /invest/asset/demo (all render with nav, no console errors).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter25_invest.py",
+    "/app/backend/tests/test_iter24_stripe_warmup.py",
+    "/app/test_reports/pytest/iter28_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Nav.jsx LINKS: 'VELA OPERATE' AND 'Dashboard' both target /dashboard/demo. Spec confirms this is intended (5 testids requested), but two adjacent links pointing to the same route is redundant from a UX standpoint and may confuse users. Consider differentiating destinations or merging once routing matures.",
+    "Nav.jsx adjustedLinks branch: when authed, both 'Dashboard' and 'VELA OPERATE' are remapped to /dashboard which compounds the duplication. Same point as above.",
+    "Nav.jsx hover className uses Tailwind dynamic class concatenation `hover:${active}` where `active` is a hex-color-bearing class string ('text-[#F0E5D0]' / 'text-[#2D241B]'). Tailwind JIT does not parse interpolated class strings, so this hover state is effectively NOT applied. Switch to inline onMouseEnter/Leave or to a static safelisted hover class.",
+    "Landing.jsx is now ~550 lines with 3 sub-components inline. Still readable but consider extracting SystemBlock/BeforeAfterFrame/PreviewTile into /components/landing/ to keep the page file presentational only.",
+    "Landing.jsx WHY_CARDS testid is derived from `title.toLowerCase().replace(/\\s+/g,'-')`. 'Tax-Aware ROI' contains a hyphen and resolves to 'tax-aware-roi' correctly today, but any future title containing punctuation (apostrophe, slash, &) will produce a non-matching slug. Recommend an explicit `slug` field per row.",
+    "BeforeAfterFrame label text uses CSS `uppercase` which is fine visually, but the source string remains 'Before'/'After'. Tests using inner_text() will see uppercase. Same applies to PreviewTile label, kicker-bronze, and CTA buttons. Document this for future testing agents."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (22/22)", "frontend": "100% on all spec items"},
+  "test_credentials": "n/a — all spec routes are public demos",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression: pytest /app/backend/tests/test_iter25_invest.py /app/backend/tests/test_iter24_stripe_warmup.py — 22/22 in ~3.3s. Public URL: https://hospitality-ai-12.preview.emergentagent.com. Iter28 testids confirmed: SECTIONS landing-hero, landing-what-is, landing-transformation, landing-offer, landing-differentiators, landing-portfolio-preview, landing-final; HERO landing-hero-headline, landing-hero-subtitle, landing-cta-invest, landing-cta-operate; TWO SYSTEMS landing-engine-invest(+ -cta), landing-engine-operate(+ -cta); FLOW landing-flow-step-0..5, landing-before-after; OFFER landing-offer-table, landing-offer-row-{aggressive-buy|smart-buy|market-fair|overpriced}, landing-offer-statement; WHY landing-diff-{acquisition-intelligence|asset-intelligence|tax-aware-roi|hospitality-positioning|market-signals|transformation-intelligence}; PORTFOLIO landing-portfolio-cta; FINAL landing-final-cta. NAV: vela-nav, nav-logo, nav-vela-invest, nav-vela-operate, nav-portfolio, nav-dashboard, nav-pricing, nav-enter-vela-btn, nav-login-btn. nav-mode-switch is REMOVED — do not rely on it. CSS uppercase note: kickers, table headers, CTA buttons, before/after labels and PreviewTile labels render via Tailwind `uppercase` class — Playwright inner_text() returns the rendered uppercase form even though the JSX source has Title Case. Account for that in assertions.",
+  "rca of the issue": "n/a — no issues found"
+}

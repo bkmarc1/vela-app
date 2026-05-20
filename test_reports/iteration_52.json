@@ -1,0 +1,50 @@
+{
+  "summary": "All 10 review tests PASS functionally. Backend pytest suite (6 tests, /api/invest/parse-text + parse-screenshot + invest demo regression) passes in ~8s. Frontend: homepage premium look (Test 1) renders with body bg=#F9F8F6, terracotta CTAs, 3 white proof cards, propos-nav present, NO 'VELA'/'STAYOS' strings, title='PropOS — The Operating System for Hospitality Assets'. Invest dashboard (Test 2) light shell confirmed — body+.vela-invest both resolve to rgb(249,248,246); decision strip shows Decision=PASS, Price Position='Below Market', Market Support='Medium', Biggest Risk + Next Best Action populated. Dashboard (Test 3) all 5 KPIs + watchlist + market-pulse render light. Operate (Test 4) hero+ADR/OCC/REV/YIELD tiles + build-plan-cta all visible. Portfolio (Test 5) page + changes section render. Spitogatos unreadable flow (Tests 6+7) — all 4 paths exist and paste form/textarea render. Backend AI parse-text (Test 8) returns 200 with city='Athens', neighborhood='Koukaki', asking_price_eur=280000, m2=65, rooms=2, price_per_sqm_eur=4308. Toggles (Test 9): full toggle expands strategy/yield/final-verdict and hides invest-detail-toggles. Brand (Test 10) clean. HOWEVER two visual regressions remain that contradict the 'entire app on unified warm-off-white' redesign claim.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Homepage (/) — mid-page CTA strip section",
+        "issues": [
+          "A dark section with bg=rgb(14, 9, 7) (espresso) still renders below the 'How it works' section. It contains the legacy copy 'PROPOS / Turn every property into a better-performing asset / ANALYZE ACQUISITION / RUN YIELD AUDIT'. This contradicts the redesign goal of 'entire app on unified warm-off-white' and breaks visual rhythm between the cream sections above and the cream footer below. Likely a legacy CTA banner component (possibly in /app/frontend/src/pages/landing/) whose background CSS variable was not migrated."
+        ]
+      },
+      {
+        "screen": "Invest UnreadableListing screen (/invest/asset/{draftId} when source bot-blocked)",
+        "issues": [
+          "[data-testid='listing-unreadable-screen'] container has bg=rgb(10, 8, 7) — the old dark espresso shell. Body bg is light (rgb(249,248,246)) so a hard dark rectangle sits inside a light page. All 4 paths render correctly but the visual treatment contradicts the redesign goal. The screen component (likely /app/frontend/src/pages/invest/UnreadableListing.jsx or its scoped CSS) still hard-codes a dark surface instead of consuming the new light --inv-* tokens."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_invest_parse.py",
+    "/app/test_reports/pytest/iter52_parse.xml"
+  ],
+  "action_items": [
+    "Audit /app/frontend/src/pages/landing/ for any remaining dark CTA strip component and remap to the light palette (warm off-white surface, charcoal text, terracotta accents) — currently a dark band sits between two cream sections on the homepage.",
+    "Update /app/frontend/src/pages/invest/UnreadableListing.jsx (or its scoped CSS) — the [data-testid='listing-unreadable-screen'] container is still painted with the legacy espresso bg (rgb(10,8,7)). Replace with the warm off-white surface used elsewhere; keep the terracotta 'SOURCE BLOCKED' badge as the single accent."
+  ],
+  "critical_code_review_comments": [
+    "The redesign migrated --vela-* / --inv-* CSS variables to a light palette, but at least two components still set explicit dark background colors inline or via non-tokenized CSS, defeating the variable-only theming approach. Migrate those literal hex values to the centralized tokens so future re-themes are truly one-file changes.",
+    "Backend server.py still >4300 lines — recommend splitting the invest parser block into a dedicated module (carried over from iteration 51).",
+    "Console shows recurring 401 errors on every page load — appears to be a 3rd-party resource (e.g. analytics/CDN) and does not affect functionality, but worth identifying and removing or providing the missing auth header to keep the console clean for QA."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100% functional, 80% design (2 dark surfaces remaining)"
+  },
+  "test_credentials": "none required — public/demo routes only",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 10 review-request tests pass functionally and all 6 backend pytest cases pass in /app/test_reports/pytest/iter52_parse.xml. The only outstanding items are two visual regressions where dark espresso surfaces (rgb(10,8,7) and rgb(14,9,7)) survived the redesign: (1) a CTA strip section on the homepage between 'How it works' and the footer, and (2) the listing-unreadable-screen container reached by entering a Spitogatos URL on /invest. Both are CSS-only fixes — no component logic changes needed. The /invest/asset/demo dashboard, /dashboard/demo, /operate, /portfolio/demo, and main /invest landing all render correctly in the new light palette.",
+  "rca of the issue": "Homepage dark band and UnreadableListing dark container retained literal espresso hex values that bypassed the --vela-* / --inv-* token remap. The variable-level color flip described in the review request only affected components that consumed the tokens; two outlier components hard-coded their backgrounds and therefore did not flip. Fix is to swap those literal values for var(--vela-bg) or the equivalent light token."
+}

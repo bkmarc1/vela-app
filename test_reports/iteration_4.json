@@ -1,0 +1,43 @@
+{
+  "summary": "VELA Iteration 4 (Reliability refactor) tested end-to-end. Backend: 19/19 regression + 4/4 fallback-helper unit tests + 8/8 transform regression all pass (31/32 incl. 1 intentional skip). Live /api/properties/{id}/analyze now returns the lightweight schema exactly as specced — summary, 8 metrics, score_breakdown (6 axes weights 25/20/15/15/15/10 summing to 100), 12-month performance_overview, exactly 5 yield_opportunities, market_intelligence{adr_range,pricing_gap,premium_potential}, action_plan.quick_wins (exactly 3) with NO design_intelligence/layout_intelligence/medium_upgrades/high_roi_renovations and NO _id leakage. Internal numeric consistency check (annual_revenue ≈ ADR×365×occ%) holds within 5%. Demo /api/properties/demo unchanged — still rich (10-key design_intelligence, layout_intelligence, all 3 action_plan tabs, 6-axis score_breakdown, 12-month curve). _compute_fallback_analysis() exercised directly via python: produces a complete light schema without crashing on missing inputs, and _enrich_analysis() correctly attaches the 6-axis score_breakdown (preserving existing AI breakdowns) and the 12-month seasonal curve. Frontend: /analyze submits cleanly with min inputs, runs the 4 cinematic stages exactly as specced ('Reading property data…', 'Evaluating yield potential…', 'Scoring layout efficiency…', 'Generating asset intelligence…'), navigates to /dashboard/{id}, dashboard renders with no console errors despite missing design_intelligence/layout_intelligence/medium_upgrades/high_roi_renovations (action plan tab bar correctly filters to 'Quick Wins' only). Submit button label is 'Generate Analysis'. Demo dashboard regression OK (all 3 action plan tabs, design+layout intel sections, Transformation Engine all visible). Error/retry path verified via Playwright route interception: first /analyze returns 502 → analysis-error + retry-btn render, click Retry reuses pendingId (POST /properties stays at 1, second /analyze fires) and navigates to /dashboard. Fallback badge path was not directly observable since live AI succeeded each time — but the helper test confirms is_fallback=True is set deterministically when run_ai_analysis returns None.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vela_backend.py",
+    "/app/backend/tests/test_iter4_fallback.py",
+    "/app/backend/tests/test_transform.py",
+    "/app/test_reports/pytest/iter4_regression_results.xml",
+    "/app/test_reports/pytest/iter4_fallback_results.xml",
+    "/app/test_reports/pytest/iter4_transform_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now 970 lines (up from ~880). The reliability refactor cleanly splits AI call (_ai_analysis_call), fallback (_compute_fallback_analysis), enrichment (_enrich_analysis) and orchestration (run_ai_analysis + analyze_property) — well-factored. Recommend (carry-over) splitting DEMO_PROPERTY/DEMO_ANALYSIS into /app/backend/seed/demo.py and TRANSFORM_DIRECTIVES into /app/backend/transform/directives.py.",
+    "run_ai_analysis catches a broad Exception which is correct for the reliability goal — every AI failure (key missing, import error, ChatError, JSON parse failure, network) ends up in the fallback path. analyze_property no longer raises 5xx for AI failures (good).",
+    "_enrich_analysis is idempotent with respect to score_breakdown (only sets if missing) and respects existing performance_overview.monthly_revenue from AI — correct design.",
+    "Internal numeric consistency rule (annual_revenue ≈ ADR×365×occ/100) is enforced softly via the prompt; the live AI returned values within 5% in the test run. The fallback path computes it exactly, so it's safe under degradation.",
+    "Frontend Analyze.runFlow correctly preserves pendingId across retries — verified by Playwright (POST /properties count remained 1 after a 502 → retry → success cycle).",
+    "Dashboard.availableTabs filters action_plan tabs to only the populated ones — verified visually (only 'Quick Wins' shown for live /analyze, all 3 tabs shown for /demo).",
+    "fallback-badge ([data-testid=\"fallback-badge\"]) is rendered conditionally on a.is_fallback — code path inspected; not exercised live (AI was up). The toast 'Preliminary analysis ready — full intelligence will refresh shortly.' fires from the same condition.",
+    "No MongoDB ObjectId leakage detected on any endpoint touched."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vela_backend.py (test_analyze rewritten for the lightweight Iteration 4 schema)",
+    "/app/backend/tests/test_iter4_fallback.py (NEW — direct unit tests for _compute_fallback_analysis & _enrich_analysis)"
+  ],
+  "success_rate": {
+    "backend": "100% (31/32 — 19 regression + 4 fallback unit + 8 transform; 1 intentional skip on env-swap test that cannot affect supervisor process)",
+    "frontend": "100% (Analyze form, 4 stages, navigation, demo regression, error+retry+pendingId-reuse all PASS; fallback badge not exercisable via UI because live AI was up)"
+  },
+  "test_credentials": "MongoDB test_database session inserted via conftest._create_session(). UI test session: ui_session_1778225496268 (user_id ui-iter4-...).",
+  "seed_data_creation": "TEST_VELA_Suite + TEST_VELA_Fallback + TEST_Iter4_UI + TEST_Iter4_RetryFlow properties + 2 PNG uploads created by regression suite. All TEST_-prefixed for easy cleanup.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "Run order: pytest /app/backend/tests/test_vela_backend.py /app/backend/tests/test_iter4_fallback.py -v (~50s, 1 live AI call). For full suite incl. transform regression: also run pytest /app/backend/tests/test_transform.py -v (~2.5 min, 5 live Claude calls). To verify the fallback badge path in the UI, monkeypatch the supervisor backend's EMERGENT_LLM_KEY='' (edit /app/backend/.env temporarily) and rerun /analyze — analysis.is_fallback will be True and the [data-testid=\"fallback-badge\"] will render under the summary along with the 'Preliminary analysis ready' sonner toast.",
+  "rca of the issue": "No bugs found in this iteration. All Iteration 4 acceptance criteria validated."
+}

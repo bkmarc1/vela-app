@@ -1,0 +1,44 @@
+{
+  "summary": "VELA Iteration 3 (Transformation Engine) end-to-end tested. Backend: 26/26 pytest cases pass (8 new transform tests + 18 regression). All 5 representative /api/transform actions (shopping_list, shot_list, lighting_plan, terrace_concept, airbnb_title) hit live Claude Sonnet 4.5 and return valid schema {headline, tldr, sections[3-6]{heading,items[]}, optional metric, action} with NO _id leakage. Endpoint is public (no cookie/Bearer needed). Invalid action -> 400. Malformed body -> 422. Frontend /dashboard/demo: Transformation Engine section renders with correct copy, action pills wired on yield + action plan cards, TransformPanel opens with cinematic loading stages and cycles to AI output (~10-30s), body scroll locks, Esc/overlay/close-button all dismiss the panel, action plan tabs (quick_wins/medium_upgrades/high_roi_renovations) all render their 2-CTA pills (6 pills/tab). One frontend bug: lighting card (yield-1) renders the photography action set instead of lighting actions due to a regex precedence issue in actionsForRecommendation().",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "transformActions.js / Dashboard yield-1 (Programmed 2700K evening lighting layer)",
+        "issue": "Lighting card renders photography pills (shot_list, photographer_brief, styling_direction, airbnb_cover_strategy) instead of the expected lighting set (lighting_plan, shopping_list, visualize_upgrade, adr_impact). Cause: the lighting recommendation's detail string contains the word 'imagery', which matches the photo regex `/\\b(photo|photograph|shoot|cover|imagery|picture)\\b/` BEFORE the lighting branch is evaluated. So the heuristic mis-classifies the lighting card as a photography card.",
+        "selector": "[data-testid^=\"yield-1-action-\"]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_transform.py",
+    "/app/backend/tests/test_vela_backend.py",
+    "/app/test_reports/pytest/transform_results.xml",
+    "/app/test_reports/pytest/regression_results.xml"
+  ],
+  "action_items": [
+    "Fix actionsForRecommendation() in /app/frontend/src/lib/transformActions.js so the lighting card is classified as lighting, not photography. Suggested fix (any of): (a) move the lighting branch ABOVE the photo branch, (b) drop 'imagery' from the photo regex (it's a soft term, easy collision), or (c) tighten matching by checking the title only first, then the detail. Verification: yield-1 (Programmed 2700K evening lighting layer) must expose data-testids yield-1-action-lighting_plan, yield-1-action-shopping_list, yield-1-action-visualize_upgrade, yield-1-action-adr_impact.",
+    "(Carry-over from iter 2, not re-investigated) Wrap run_ai_analysis in try/except for emergentintegrations ChatError so analyze never returns raw 500 on AI provider/budget errors."
+  ],
+  "critical_code_review_comments": [
+    "server.py /api/transform endpoint is clean: action whitelist, Pydantic TransformRequest, public route, ChatError translated to 502, and JSON-fence stripping mirrors the analyze endpoint. action key is correctly added to the response payload after parsing.",
+    "TRANSFORM_DIRECTIVES has 20 keys — matches ACTIONS map in transformActions.js exactly. No drift.",
+    "TransformPanel.jsx correctly debounces requests via reqRef counter (prevents stale-response bleed when user rapidly switches actions), locks body scroll, registers/cleans up Escape handler, and clears the stage interval on unmount. Solid.",
+    "Heuristic in actionsForRecommendation is order-dependent and brittle to copy changes — the bug above proves it. Recommend either narrowing each regex to the recommendation TITLE (not title+detail), or using a per-branch keyword-weight scoring approach.",
+    "server.py is now ~880 lines — same recommendation as iter 2: split DEMO_PROPERTY/DEMO_ANALYSIS into /app/backend/seed/demo.py and TRANSFORM_DIRECTIVES into /app/backend/transform/directives.py.",
+    "No MongoDB ObjectId leakage observed in any new endpoint. /api/transform never touches Mongo.",
+    "Backend payload property field shadows Python builtin `property`; works because it's only accessed as a Pydantic attribute, but consider renaming to avoid linter noise."
+  ],
+  "updated_files": ["/app/backend/tests/test_transform.py"],
+  "success_rate": {"backend": "100% (26/26 — 8 new transform + 18 regression)", "frontend": "~95% — Transformation Engine section, panel open/loading/output, scroll lock, Esc/overlay/close-button dismiss, action plan pills all PASS. Lighting card pill set is wrong (1 of 4 yield cards mis-classified)."},
+  "test_credentials": "Reused per-run sessions in MongoDB test_database via conftest._create_session(). /api/transform itself is public — no auth used.",
+  "seed_data_creation": "TEST_VELA_Suite property + uploaded TEST PNGs created by regression suite. transform tests use only the static demo property payload (read-only, no DB writes).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run `pytest /app/backend/tests/test_transform.py -v` (~2.5 min, 5 live Claude calls) and `pytest /app/backend/tests/test_vela_backend.py -v --deselect '...::test_analyze'` for fast regression. To verify the lighting fix: navigate to /dashboard/demo and confirm the lighting card (yield-1) exposes data-testids yield-1-action-lighting_plan, yield-1-action-shopping_list, yield-1-action-visualize_upgrade, yield-1-action-adr_impact.",
+  "rca of the issue": "Bug: Lighting yield card displays photography action pills.\nReproduction: Open /dashboard/demo. Inspect the second yield card titled 'Programmed 2700K evening lighting layer'. Expected pills: GENERATE LIGHTING PLAN / GENERATE SHOPPING LIST / VISUALIZE UPGRADE / ESTIMATE ADR IMPACT. Actual pills: GENERATE SHOT LIST / PHOTOGRAPHER BRIEF / STYLING DIRECTION / COVER IMAGE STRATEGY (data-testids yield-1-action-shot_list etc.).\nRoot cause: actionsForRecommendation() in /app/frontend/src/lib/transformActions.js concatenates `${title} ${detail}` and tests regexes in order. The photo branch (`/\\b(photo|photograph|shoot|cover|imagery|picture)\\b/`) runs BEFORE the lighting branch. The lighting recommendation's detail contains the phrase 'editorial imagery' — 'imagery' matches the photo regex, so the function returns the photography action set and never reaches the lighting branch.\nMitigation (one-line): swap the order so the lighting branch runs before the photo branch, OR drop 'imagery' from the photo regex, OR scope the photo/lighting/outdoor regexes to `rec?.title` only and use `detail` only as a tiebreaker."
+}

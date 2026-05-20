@@ -1,0 +1,24 @@
+{
+  "summary": "Frontend-only verification of VELA Iter23 — Yield Brain landing rebuild + dedupe inline banner + dark Visualize header. All 28 testid checkpoints PASS. Landing renders all 8 sections in correct top-to-bottom order (hero-image @161 → revenue-section @656 → case-study-section @1104 → how-section @1648 → yield-profile-section @2166 → why-different-section @2640 → workflow-section @3211 → final-cta-section @3526). Old testids fully removed. Visualize dark header confirmed at #1A130D. Dedupe banner correctly absent on direct /dashboard/demo route. Backend untouched per request — not retested.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Landing.jsx (479 lines), Dashboard.jsx (1113 lines) — Dashboard exceeds the 700-line guideline. Recommend splitting Dashboard into smaller modules (IntelligenceProfileStrip, MarketBenchmarkPosition, ConversionIntelligence, OperationalFriction, YieldHeroCard/YieldCard) into separate files for maintainability.",
+    "Dashboard.jsx line 112-118: handleAction references `a.yield_opportunities` before `a` is defined in its closure scope — works only because handleAction is invoked AFTER `const a = data.analysis` runs in the render path, but this is fragile. If invoked outside that path it would ReferenceError. Consider moving handleAction below `const a = data.analysis` or reading from `data?.analysis?.yield_opportunities` directly.",
+    "Console: 401 errors on resource loads observed on all 3 pages (likely auth-gated endpoint or external resource) — non-blocking but worth investigating to keep console clean."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not requested)", "frontend": "100%"},
+  "test_credentials": "n/a — public demo routes only",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter23 frontend verified end-to-end via browser automation. Verified: (1) Landing 8-section testid order, (2) hero-title/sub/microcopy text, (3) revenue-section dark bg #1A130D, (4) case-under-positioned + case-higher-yield-product use IDENTICAL img URL containing 1505693416388, (5) 4 ft-* rows, (6) 5 step-* rows, (7) yield-profile-grid has 8 cells with all 8 expected labels, (8) why-col-generic-ai has 5 li / why-col-vela has 7 li, (9) 6 flow-* cells, (10) all old testids (before-after-section, gap-section, inevitability-section, revenue-strip, rs-*, workflow-0..3, ba-*) return 0 count, (11) hero img uses photo-1582719478250, (12) /dashboard/demo dedupe-banner count = 0 when no location.state passed, (13) /visualize/demo/0 header bg confirmed rgb(26,19,13)=#1A130D, back-to-dashboard + visualize-studio testids present.",
+  "rca of the issue": "n/a — no failures."
+}
