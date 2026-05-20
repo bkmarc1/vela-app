@@ -1056,3 +1056,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+from services.airbnb_service import AirbnbService
+from services.airdna_service import AirDnaService
+from services.sync_manager import SyncManager
+
+# Initialize services
+airbnb_service = AirbnbService()
+airdna_service = AirDnaService()
+sync_manager = SyncManager(db, airbnb_service, airdna_service)
+
+# New endpoints for data integration
+@api_router.post("/sync/listings")
+async def sync_listings(location: str, user: User = Depends(require_user)):
+    """Sync listings from Airbnb for a location"""
+    result = await sync_manager.sync_listings(location, user.user_id)
+    return result
+
+@api_router.post("/sync/market-data")
+async def sync_market_data(city: str, country: str, user: User = Depends(require_user)):
+    """Sync market analytics from AirDNA"""
+    result = await sync_manager.sync_market_data(city, country, user.user_id)
+    return result
+
+@api_router.get("/sync/history")
+async def get_sync_history(limit: int = 10, user: User = Depends(require_user)):
+    """Get user's sync history"""
+    history = await sync_manager.get_sync_history(user.user_id, limit)
+    return {"sync_history": history}
