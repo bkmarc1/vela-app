@@ -1,3 +1,8 @@
 git add .
 git commit -m "Add .nvmrc for Node 18"
 git push origin main
+mkdir docs
+git add .
+   git commit -m "Add docs folder with HTML INVEST dashboard"
+   git push origin main
+   

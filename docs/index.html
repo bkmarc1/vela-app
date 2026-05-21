@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Propul8 INVEST</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        h1 { margin: 0; color: #333; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #3b82f6; color: white; padding: 12px; border: none; border-radius: 4px; width: 100%; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏠 Propul8 INVEST</h1>
+        <p>Instant investment analysis</p>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>Manual Entry</h2>
+            <input type="text" id="city" value="Mykonos" placeholder="City">
+            <select id="type"><option>Villa</option><option>Apartment</option></select>
+            <input type="number" id="price" value="850000" placeholder="Price €">
+            <input type="number" id="m2" value="180" placeholder="Size m²">
+            <input type="number" id="rooms" value="3" placeholder="Bedrooms">
+            <button onclick="analyze()">📊 Analyze</button>
+        </div>
+        <div class="card">
+            <h2>Coming Soon</h2>
+            <p>Text parsing and advanced features coming!</p>
+        </div>
+    </div>
+    <script>
+        const API = 'https://vela-app-63fr.onrender.com/api';
+        async function analyze() {
+            alert('Analysis feature coming soon!');
+        }
+    </script>
+</body>
+</html>
